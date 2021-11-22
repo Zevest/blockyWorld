@@ -1,0 +1,6 @@
+old_**
+.jshintrc
+res/shader
+res/*.tsx
+src/proj1
+src/proj2

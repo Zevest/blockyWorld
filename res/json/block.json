@@ -1,0 +1,486 @@
+{
+    "dataValues":{
+        "uvType":[
+            "simple",
+            "3-side-V",
+            "cross",
+            "4-side"
+        ],
+        "blockType":[
+            "block_opaque",
+            "block_semi_transparent",
+            "block_transparent",
+            "cross_transparent"
+        ]
+    },
+    "blocks":[
+        {
+            "stone":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "stone"
+                
+            }
+        },
+        {
+            "dirt":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "dirt"
+            }
+        },
+        {
+            "grass_block": {
+                "uvType": "3-side-V",
+                "type":"block_opaque",
+                "faces":  {
+                    "top":"grass_top",
+                    "side":"grass_block_side",
+                    "bottom":"dirt"
+                }
+            }
+        },
+        {
+            "oak_plank":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "oak_plank"
+            }
+        },
+        {
+            "smooth_stone":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "smooth_stone"
+            }
+        },
+        {
+            "brick":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "brick"
+            }
+        },
+        {
+            "smooth_stone":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "smooth_stone"
+            }
+        },
+        {
+            "tnt": {
+                "uvType": "3-side-V",
+                "type":"block_opaque",
+                "faces":  {
+                    "top":"tnt_top",
+                    "side":"tnt_side",
+                    "bottom":"tnt_bottom"
+                }
+            }
+        },
+        {
+            "cobweb":{
+                "uvType": "cross",
+                "type": "cross_transparent",
+                "face": "cobweb"
+            }
+        },
+        {
+            "poppy":{
+                "uvType": "cross",
+                "type": "cross_transparent",
+                "face": "poppy"
+            }
+        },
+        {
+            "dandelion":{
+                "uvType": "cross",
+                "type": "cross_transparent",
+                "face": "dandelion"
+            }
+        },
+        {
+            "oak_sapling":{
+                "uvType": "cross",
+                "type": "cross_transparent",
+                "face": "oak_sapling"
+            }
+        },
+        {
+            "cobble_stone":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "cobble_stone"
+            }
+        },
+        {
+            "bedrock":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "bedrock"
+            }
+        },
+        {
+            "sand":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "sand"
+            }
+        },
+        {
+            "gravel":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "gravel"
+            }
+        },
+        {
+            "smooth_stone":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "smooth_stone"
+            }
+        },
+        {
+            "oak_log": {
+                "uvType": "3-side-V",
+                "type":"block_opaque",
+                "faces":  {
+                    "top":"oak_log_top",
+                    "side":"oak_log_side",
+                    "bottom":"oak_log_top"
+                }
+            }
+        },
+        {
+            "iron_block":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "iron_block"
+            }
+        },
+        {
+            "gold_block":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "gold_block"
+            }
+        },
+        {
+            "diamond_block":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "diamond_block"
+            }
+        },
+        {
+            "emerald_block":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "emerald_block"
+            }
+        },
+        {
+            "red_mushroom":{
+                "uvType": "cross",
+                "type": "cross_transparent",
+                "face": "red_mushroom"
+            }
+        },
+        {
+            "brown_mushroom":{
+                "uvType": "cross",
+                "type": "cross_transparent",
+                "face": "brown_mushroom"
+            }
+        },
+        {
+            "jungle_sapling":{
+                "uvType": "cross",
+                "type": "cross_transparent",
+                "face": "jungle_sapling"
+            }
+        },
+        {
+            "gold_ore":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "gold_ore"
+            }
+        },
+        {
+            "iron_ore":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "iron_ore"
+            }
+        },
+        {
+            "coal_ore":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "coal_ore"
+            }
+        },
+        {
+            "bookshelf":{
+                "uvType": "3-side-V",
+                "type":"block_opaque",
+                "faces":  {
+                    "top":"oak_plank",
+                    "side":"bookshelf",
+                    "bottom":"oak_plank"
+                }
+            }
+        },
+        {
+            "mossy_cobblestone":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "mossy_cobblestone"
+            }
+        },
+        {
+            "obsidian":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "obsidian"
+            }
+        },
+        {
+            "grass":{
+                "uvType": "cross",
+                "type": "cross_transparent",
+                "face": "grass"
+            }
+        },
+        {
+            "crafting_table": {
+                "uvType": "4-side",
+                "type":"block_opaque",
+                "faces":  {
+                    "top":"crafting_table_top",
+                    "front":"crafting_table_front",
+                    "side":"crafting_table_side",
+                    "bottom":"oak_plank"
+                }
+            }
+        },
+        {
+            "furnace": {
+                "uvType": "4-side",
+                "type":"block_opaque",
+                "faces":  {
+                    "top":"furnace_top",
+                    "front":"furnace_front",
+                    "side":"furnace_side",
+                    "bottom":"furnace_top"
+                }
+            }
+        },
+        {
+            "dispenser": {
+                "uvType": "4-side",
+                "type":"block_opaque",
+                "faces":  {
+                    "top":"furnace_top",
+                    "front":"dispenser_front",
+                    "side":"furnace_side",
+                    "bottom":"furnace_top"
+                }
+            }
+        },
+        {
+            "sponge":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "sponge"
+            }
+        },
+        {
+            "glass_block":{
+                "uvType": "simple",
+                "type":"block_transparent",
+                "face": "glass"
+            }
+        },
+        {
+            "diamond_ore":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "diamond_ore"
+            }
+        },
+        {
+            "redstone_ore":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "redstone_ore"
+            }
+        },
+        {
+            "sponge":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "sponge"
+            }
+        },
+        {
+            "oak_leaves":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "oak_leaves"
+            }
+        },
+        {
+            "birch_leaves":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "birch_leaves"
+            }
+        },
+        {
+            "stone_brick":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "stone_brick"
+            }
+        },
+        {
+            "dead_bush":{
+                "uvType": "cross",
+                "type": "cross_transparent",
+                "face": "dead_bush"
+            }
+        },
+        {
+            "fern":{
+                "uvType": "cross",
+                "type": "cross_transparent",
+                "face": "fern"
+            }
+        },
+        {
+            "spruce_sapling":{
+                "uvType": "cross",
+                "type": "cross_transparent",
+                "face": "spruce_sapling"
+            }
+        },
+        {
+            "white_whool":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "white_whool"
+            }
+        },
+        {
+            "spawner":{
+                "uvType": "simple",
+                "type":"block_transparent",
+                "face": "spawner"
+            }
+        },
+        {
+            "snow_block":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "snow"
+            }
+        },
+        {
+            "snow_dirt":{
+                "uvType": "3-side-V",
+                "type":"block_opaque",
+                "faces":  {
+                    "top":"snow",
+                    "side":"snow_dirt_side",
+                    "bottom":"dirt"
+                }
+            }
+        },
+        {
+            "cactus_middle":{
+                "uvType": "3-side-V",
+                "type":"block_semi_transparent",
+                "faces":  {
+                    "top":"cactus_bottom",
+                    "side":"cactus_side",
+                    "bottom":"cactus_bottom"
+                },
+                "properties":{
+                    "size" : {
+                        "x": 0.875,
+                        "y": 1.0,
+                        "z": 0.875
+                    },
+                    "showSide": "true"
+                }
+            }
+        },
+        {
+            "cactus_top":{
+                "uvType": "3-side-V",
+                "type":"block_semi_transparent",
+                "faces":  {
+                    "top":"cactus_top",
+                    "side":"cactus_side",
+                    "bottom":"cactus_bottom"
+                },
+                "properties": {
+                    "size" : {
+                        "x": 0.875,
+                        "y": 1,
+                        "z": 0.875
+                    },
+                    "showSide": "true",
+                    "showTop": "true"
+                }
+            }
+        },
+        {
+            "clay":{
+                "uvType": "simple",
+                "type":"block_opaque",
+                "face": "clay"
+            }
+        },
+        {
+            "sugar_cane":{
+                "uvType": "cross",
+                "type": "cross_transparent",
+                "face": "sugar_cane"
+            }
+        },
+        {
+            "jukebox": {
+                "uvType":"3-side-V",
+                "type":"block_opaque",
+                "faces":{
+                    "top":"jukebox_top",
+                    "side":"note_block",
+                    "bottom":"note_block"
+                }
+            }
+        },
+        {
+            "mycelium": {
+                "uvType":"3-side-V",
+                "type":"block_opaque",
+                "faces":{
+                    "top":"mycelium_top",
+                    "side":"mycelium_side",
+                    "bottom":"dirt"
+                }
+            }
+        },
+        {
+            "birch_sapling": {
+                "uvType":"cross",
+                "type":"cross_transparent",
+                "face":"birch_sapling"
+            }
+        }
+    ]
+}
