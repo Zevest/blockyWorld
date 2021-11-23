@@ -3,6 +3,13 @@ class Input {
     static mouseEvent = {button: {}, position:{x:0, y:0}, move:{x:0, y:0, changed:false}};
     static hasFocus = false;
     static hasMouseLock = false;
+
+    static onClick = null;
+    static onKeyDown = null;
+    static onKeyUp = null;
+    static onMouseDown = null;
+    static onMouseUp = null;
+
     static Init (obj, updateRate = 60) {
         window.addEventListener("focus",() => {Input.onFocus(obj);});
         window.addEventListener("blur",() => {Input.onLostFocus(obj); /*Input.lockChangeAlert(obj)*/;});
@@ -16,7 +23,10 @@ class Input {
         
         Input.disbaleShortCut();
 
-        obj.addEventListener("click", () => { if(!Input.hasMouseLock) obj.requestPointerLock(); });
+        obj.addEventListener("click", (event) => { 
+            if(!Input.hasMouseLock) obj.requestPointerLock(); 
+            if(Input.onClick) Input.onClick(event.which);
+        });
         obj.addEventListener("mousedown",  (event) => {Input.mouseDown(event.which, event.x, event.y)})
         obj.addEventListener("mouseup", (event) => {Input.mouseUp(event.which, event.x, event.y)})        
         obj.oncontextmenu = () => {return false;};
@@ -40,6 +50,7 @@ class Input {
         if(key.length == 1){
             key = key.toLowerCase();
         }
+        if(Input.onKeyDown) Input.onKeyDown(key);
         Input.keyBoardPress[key] = true;
     }
 
@@ -48,6 +59,7 @@ class Input {
         if(key.length == 1){
             key = key.toLowerCase();
         }
+        if(Input.onKeyUp) Input.onKeyUp(key);
         Input.keyBoardPress[key] = false;
     }
 
@@ -70,11 +82,13 @@ class Input {
     }
 
     static mouseDown(button) {
-        if(!Input.hasMouseLock) Input.mouseEvent.button[`${button}`] = true;
+        if(!Input.hasMouseLock)Input.mouseEvent.button[`${button}`] = true;
+        if(Input.onMouseDown) Input.onMouseDown(button);
     }
 
     static mouseUp(button) {
         if(!Input.hasMouseLock) Input.mouseEvent.button[`${button}`] = false;
+        if(Input.onMouseUp) Input.onMouseUp(button);
     }
 
     static mouseMove(event) {
