@@ -1,7 +1,7 @@
 class Chunk {
-    static width = 64;
-    static height = 30;
-    static depth = 64;
+    static width = 16;
+    static height = 256;
+    static depth = 16;
     static blockCheck;
     static facesOrder;
 
@@ -10,7 +10,7 @@ class Chunk {
         this.y = y;
         this.id = `${x};${y}`;
         this.blockData = new Array(Chunk.width * Chunk.depth * Chunk.height).fill(-1);
-
+        this.isUpdating = false;
         this.transparent_geometry;
         this.opaque_geomtry;
 
@@ -59,13 +59,25 @@ class Chunk {
             for(let k = 0; k < Chunk.depth; ++k) {
                 let posX = this.x + i/Chunk.width;
                 let posZ = this.y + k/Chunk.width;
-                let sample = noise.perlin2(posX*5, posZ*5) * 0.2;
-                //let sample2 = noise.perlin2(posX/10, posZ/10)*2;
-                let sample3 = noise.perlin2(posX, posZ)*0.5;
-                let height = Math.min(64, Chunk.height / 2 + Math.floor(2 *(sample + sample3)*(Chunk.height / 4)));
+                let sample = noise.perlin2(posX, posZ) * 0.01;
+                let sample2 = noise.perlin2(posX*0.5, posZ*0.5) * 0.05;
+                let sample3 = noise.perlin2(posX*0.2, posZ*0.2)*0.4;
+                let sample4 = noise.perlin2(posX*0.1, posZ*0.1)*0.2;
+                let mult = noise.perlin2(posX*0.1+0.1, posZ*0.1+0.1);
+                
+                let height = Math.min(128, Math.max(30, Chunk.height/ 2)) + Math.floor(2 *(sample + sample2 +  sample3 + sample4 * mult)*(Chunk.height / 4));
+                //console.log(height);
+                //debugger;
                 for(let j = 0; j < height-4; ++j) { this.setBlock(blockList[0].id, i, j, k)}
-                for(let j = height-4; j < height; ++j) {this.setBlock(blockList[1].id, i, j, k)};
-                this.setBlock(blockList[2].id, i, height, k);
+                for(let j = height-4; j < height; ++j) {
+                    if(j > 128) this.setBlock(blockList[48].id, i, j, k)
+                    else this.setBlock(blockList[1].id, i, j, k)
+                };
+                
+                if(height > 128) this.setBlock(blockList[49].id, i, height, k);
+                else if(height > 100) this.setBlock(blockList[2].id, i, height, k);
+                else this.setBlock(blockList[14].id, i, height, k);
+                
                // this.setBlock(blockList[31].id, i, height+1, k);
             }
         }

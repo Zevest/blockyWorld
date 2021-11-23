@@ -4,6 +4,8 @@ class Application {
     }
     static TargetFrameRate = 165
     
+
+
     constructor(){
         // setting up container
         this.canvas = window.document.createElement("canvas");
@@ -13,7 +15,7 @@ class Application {
         this.clock = new THREE.Clock();
 
         this.scene = new THREE.Scene();
-
+        this.rayCaster = new THREE.Raycaster();
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
         this.camera.position.set(0, 1, 4);
         
@@ -35,6 +37,7 @@ class Application {
         
         this.timeScale = 1.0;  
         this.pp = 0;
+        this.currentBlock = 0;
     }
 
     resizeViewPort() {
@@ -176,11 +179,74 @@ class Application {
         }
         return this.materials[matName];
     }
-
+    /*
+    getMaxComponentIndex(vector) {
+        let m = vector.x;
+        let l = [1, vector.x, vector.y, vector.z];
+        for(let i = 1, v = l[i]; i <  l.length; ++i) {
+            if(Math.abs(m) > Math.abs(v)){
+                m = v;
+                l[0] = i;
+            }
+        }
+        return l;
+    }
+    */
     start() {
         //let red  = this.addColorMaterial(255,0,0);
         //let green  = this.addColorMaterial(0,255,0);
         // let blue  = this.addColorMaterial(0,0,255);
+        Input.onClick = (button) => {
+            if(!Input.hasMouseLock) return;
+            let pos = World.ToLocalCoord(this.camera.position.x, this.camera.position.y, this.camera.position.z);
+            //console.log(pos);
+            this.rayCaster.setFromCamera({x: 0, y:0}, this.camera);
+            
+            const chunksID = World.currentWorld.getNearbyChunk(this.camera.position.x, this.camera.position.y, this.camera.position.z);
+            let hits = []
+            let chunksObjs = []
+            chunksID.forEach( (id) => chunksObjs.push(World.currentWorld.world.getObjectByName(id)));
+            hits = this.rayCaster.intersectObjects(chunksObjs);
+
+            if(hits.length > 0 && hits[0].distance > 0.8 && hits[0].distance < 5){
+                let hitpos = hits[0].point;
+                //if(Math.sign(forward[forward[0]]) == Math.sign(normal[normal[0]])) return;
+                if(button == 1){
+                    hitpos.addScaledVector(hits[0].face.normal, 0.5);
+                    World.currentWorld.setBlock(this.currentBlock, hitpos.x, hitpos.y, hitpos.z, false);
+                }
+                else if(button == 3){
+                    hitpos.addScaledVector(hits[0].face.normal, -0.5);
+                    World.currentWorld.setBlock(-1, hitpos.x, hitpos.y, hitpos.z, false);
+                }
+                else if(button == 2) {
+                    //hitpos.addScaledVector(hits[0].face.normal, 1.0);
+                    let block = World.currentWorld.getBlock(hitpos.x, hitpos.y, hitpos.z);
+                    this.currentBlock = block;
+                    console.log(block);
+                }
+                
+            }
+            
+            chunksObjs.forEach((obj) => {
+                this.world.updateChunk(obj, this.world.chunks[obj.name]);
+            });
+
+            console.log(button);
+            /*for(let ids of chunksID){
+                let chunkObj = World.currentWorld.world.getObjectByName(ids);
+                if(chunkObj){
+                    console.log(chunkObj, chunkObj instanceof THREE.Object3D);
+                    hits = this.rayCaster.intersectObject(chunkObj);
+                }else{
+                    console.error("cannot find chunk", ids);
+                }
+            }*/
+
+            //let hit = 
+            //console.log(hit[0].point, hit[0]);
+            //World.currentWorld.setBlock(0, hit[0].point.x, hit[0].point.y, hit[0].point.z);
+        }
         this.cameraController = addComponent(this.camera, CameraController);
         BlockInfo.initData("../../res/json/block.json", "../../res/json/MinecraftTiles.json", 
         "../../res/shader/block_cross_vert.glsl", "../../res/shader/block_cross_frag.glsl",
@@ -232,6 +298,8 @@ class Application {
     -15 -> 0
     -16 -> 15
     */
+
+
 
     update(deltaTime) {
         this.cameraController.Update(deltaTime);
