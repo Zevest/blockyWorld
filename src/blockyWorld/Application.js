@@ -74,10 +74,14 @@ class Application {
 
     initScene() {
         
+
         this.skyLight = new THREE.HemisphereLight(0xbfd1e5, 0x000000, 0.4);
+        //this.skyLight.position.set(new THREE.Vector3(0, 0, 0));
         this.skyLight.name = "SkyLight";
-        //this.scene.add(this.skyLight);
         
+        this.scene.add(this.skyLight);
+        this.scene.add(new THREE.HemisphereLightHelper(this.skyLight, 50));
+
         this.sunLight = new THREE.DirectionalLight(0xffffff, 1.0);
         this.sunLight.castShadow = true;
         this.sunLight.name = "Sun Light";
@@ -85,8 +89,12 @@ class Application {
         this.sunLight.position.x = 20;
         this.sunLight.position.y = 20;
         this.sunLight.position.z = 12;
-        //this.scene.add(this.sunLight);
-        
+        this.sunLight.shadow.mapSize.width = 2048;
+        this.sunLight.shadow.mapSize.height = 2048
+        this.sunLight.shadow.camera.near = 0.001;
+        this.sunLight.shadow.camera.far = 500.0;
+        this.scene.add(this.sunLight);
+        this.scene.add(new THREE.DirectionalLightHelper(this.sunLight, 5));
 
         this.ground = new THREE.Mesh(this.planeGeometry, this.materials.default);        
         this.ground.rotateX(-Math.PI /2.0);
@@ -95,6 +103,8 @@ class Application {
         this.ground.scale.x = 100;
         this.ground.scale.y = 100;
         this.ground.receiveShadow = true;
+        this.scene.add( new THREE.AxesHelper(100))
+        this.scene.add( new THREE.GridHelper(100, 100));
         /*this.chunk1 = new Chunk(0, 0);
         this.chunk2 = new Chunk(1, 0);
         //this.chunk.generateRandom(BlockData.BLOCK_LIST);
@@ -121,7 +131,9 @@ class Application {
         this.world.initWorld();
         this.world.generateWorld();
         this.world.generateMeshes(this.materials.chunk);
+        //this.world.world.position.y = -15;
         this.scene.add(this.world.world);
+        this.scene.add(new THREE.BoxHelper(this.world.world, 0x55ff6a));
 
         //this.addStaticBoxRigidBody(this.ground, 0);
         this.sunLight.target = this.ground;
@@ -181,9 +193,52 @@ class Application {
         this.initScene(); 
         this.mainLoop();
     }
+    /*
+    0 -> 0
+    1 -> 1
+    2 -> 2
+    3 -> 3
+    4 -> 4
+    5 -> 5
+    6 -> 6
+    7 -> 7
+    8 -> 8
+    9 -> 9
+    10 -> 10
+    11 -> 11
+    12 -> 12
+    13 -> 13
+    14 -> 14 
+    15 -> 15
+    16 -> 0
+    */
+
+     /*
+    -0 -> 15
+    -1 -> 14
+    -2 -> 13
+    -3 -> 12
+    -4 -> 11
+    -5 -> 10
+    -6 -> 9
+    -7 -> 8
+    -8 -> 7
+    -9 -> 6
+    -10 -> 5
+    -11 -> 4
+    -12 -> 3
+    -13 -> 2
+    -14 -> 1
+    -15 -> 0
+    -16 -> 15
+    */
 
     update(deltaTime) {
         this.cameraController.Update(deltaTime);
+        this.sunLight.position.copy( this.camera.position );
+        this.sunLight.target = this.world.world;
+        //this.sunLight.target.copy( this.camera.position );
+        this.sunLight.position.y += 20;
         //this.characterController.Update(deltaTime);
        // this.physicsData.world.stepSimulation(deltaTime* this.timeScale, 1);
         

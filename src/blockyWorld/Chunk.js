@@ -1,7 +1,7 @@
 class Chunk {
-    static width = 128;
-    static height = 16;
-    static depth = 128;
+    static width = 64;
+    static height = 30;
+    static depth = 64;
     static blockCheck;
     static facesOrder;
 
@@ -57,8 +57,12 @@ class Chunk {
     generateNoise(blockList) {
         for(let i = 0; i < Chunk.width; ++i){
             for(let k = 0; k < Chunk.depth; ++k) {
-                let sample = noise.perlin2(this.x + i/Chunk.width,this.y + k/Chunk.depth);
-                let height = Chunk.height / 2 + Math.floor(sample*(Chunk.height / 4));
+                let posX = this.x + i/Chunk.width;
+                let posZ = this.y + k/Chunk.width;
+                let sample = noise.perlin2(posX*5, posZ*5) * 0.2;
+                //let sample2 = noise.perlin2(posX/10, posZ/10)*2;
+                let sample3 = noise.perlin2(posX, posZ)*0.5;
+                let height = Math.min(64, Chunk.height / 2 + Math.floor(2 *(sample + sample3)*(Chunk.height / 4)));
                 for(let j = 0; j < height-4; ++j) { this.setBlock(blockList[0].id, i, j, k)}
                 for(let j = height-4; j < height; ++j) {this.setBlock(blockList[1].id, i, j, k)};
                 this.setBlock(blockList[2].id, i, height, k);

@@ -15,7 +15,7 @@ class ChunkMesh {
         materials.texture = new THREE.TextureLoader().load("../../res/image/"+BlockInfo.tileSetInfo.image);
         materials.texture.magFilter = THREE.NearestFilter;
         
-        materials.block.opaque = new THREE.MeshBasicMaterial(
+        materials.block.opaque = new THREE.MeshPhysicalMaterial(
                 {map:materials.texture});
         materials.block.semi = new THREE.MeshBasicMaterial(
             {map:materials.texture, transparent: true});
@@ -116,6 +116,7 @@ class ChunkMesh {
         chunkMeshs.geometry.block.opaque.setAttribute("uv",
              new THREE.BufferAttribute(block_opaque_uvs, 2));
         chunkMeshs.geometry.block.opaque.setIndex(op_index);
+        chunkMeshs.geometry.block.opaque.computeVertexNormals();
 
         let block_semi_transparent_vertices = new Float32Array(st_vert);
         let block_semi_transparent_uvs = new Float32Array(st_uv);
@@ -126,6 +127,9 @@ class ChunkMesh {
         chunkMeshs.geometry.block.semi.setAttribute("uv",
                 new THREE.BufferAttribute(block_semi_transparent_uvs, 2));
         chunkMeshs.geometry.block.semi.setIndex(st_index);
+        chunkMeshs.geometry.block.semi.computeVertexNormals();
+        chunkMeshs.castShadow = true;
+        chunkMeshs.receiveShadow = true;
         
 
         let block_transparent_vertices = new Float32Array(tr_vert);
@@ -137,7 +141,7 @@ class ChunkMesh {
         chunkMeshs.geometry.block.transparent.setAttribute("uv",
                 new THREE.BufferAttribute(block_transparent_uvs, 2));
         chunkMeshs.geometry.block.transparent.setIndex(tr_index);
-
+        chunkMeshs.geometry.block.transparent.computeVertexNormals();
         
 
     
@@ -160,7 +164,7 @@ class ChunkMesh {
                 new THREE.InstancedBufferAttribute(cross_instance_uvs, 2));
         chunkMeshs.geometry.cross.setAttribute("instanceDim",
                 new THREE.InstancedBufferAttribute(cross_instance_dim, 1));
-        
+        chunkMeshs.geometry.cross.computeVertexNormals();
         
         chunkMeshs.mesh.block.opaque = new THREE.Mesh(
                 chunkMeshs.geometry.block.opaque,
