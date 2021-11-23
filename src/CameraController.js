@@ -31,13 +31,16 @@ class CameraController extends Component{
         }
     }
 
+
+
     setMoveSpeed(speed) { this.moveSpeed = speed }
     setRotationSpeed(speed) { this.rotationSpeed = speed }
 
     Update(deltaTime) {
         this.up = this.object3D.up;
         this.object3D.getWorldDirection(this.forward);
-        this.right.crossVectors(this.object3D.up, this.forward);
+        this.right.crossVectors(this.up, this.forward);
+        this.right.normalize();
         const mult = (Input.getKey("Control") ? 3 : 1);
         if(Input.getKey('z')) {
             this.object3D.position.addScaledVector(this.forward, mult * this.moveSpeed * deltaTime);
