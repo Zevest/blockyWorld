@@ -1,34 +1,48 @@
 class World {
     static currentWorld;
-    static range = 8;
+    static range = 6;
     constructor(name, seed){
         this.name = name;
         this.seed = seed;
         this.chunks = {};
-        this.world = new THREE.Object3D();
+        this.world = new THREE.Group();
         this.world.position.set(0.5, 0.5, 0.5);
         this.materials;
     }
 
     initWorld() {
-        noise.seed(this.seed);
+        //noise.seed(this.seed);
         World.currentWorld = this;
     }
 
     generateWorld(){
-        for(let i = -World.range; i <= World.range; ++i)
-            for(let j = -World.range; j <= World.range; ++j){
+        let dimension = {width: Chunk.width, height: Chunk.height, depth: Chunk.depth};
+        
+        for(let i = -World.range+1; i <= World.range; ++i)
+            for(let j = -World.range+1; j <= World.range; ++j){
                 this.chunks[World.chunkID(i,j)] = new Chunk(i, j);
-                this.chunks[World.chunkID(i,j)].generateNoise(BlockData.BLOCK_LIST);
+                WorkerManager.sendMessage("generate", [dimension, {x:i,y:j}]);
+                
+                //this.chunks[World.chunkID(i,j)].generateNoise(BlockData.BLOCK_LIST);
             }
+    }
+    setChunk(x, y, chunkData){
+        const id = World.chunkID(x, y);
+        if(!this.chunks[id])
+            this.chunks[id] = new Chunk(x, y)
+        this.chunks[id].blockData = chunkData;
+        
     }
 
     static chunkID(x, y) {
         return `${x};${y}`;
     }
-
-    generateMeshes(materials) {
+    
+    setMaterials(materials){
         this.materials = materials;
+    }
+
+    generateMeshes() {
         for(let id in this.chunks){
             let chunkData = this.chunks[id];
             let meshData = ChunkMesh.build(chunkData, this.materials);
@@ -38,6 +52,14 @@ class World {
             chunkObject.position.set(chunkData.x * Chunk.width, 0, chunkData.y * Chunk.depth);
             this.world.add(chunkObject);
         }
+    }
+
+    addChunk(meshData){
+        let chunkObject = new THREE.Object3D();
+        chunkObject.name = World.chunkID(meshData.x, meshData.y);
+        ChunkMesh.addToObject(chunkObject, meshData);
+        chunkObject.position.set(meshData.x * Chunk.width, 0, meshData.y * Chunk.depth);
+        this.world.add(chunkObject);
     }
 
     getBlock(x, y, z) {

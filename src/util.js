@@ -46,7 +46,6 @@ function Color32(r,g,b,a) {
             return RGBA(r, g, b, 0xFF);
         default:
         case 4:
-            console.log(RGBA(r, g, b, a));
             return RGBA(r, g, b, a);
     }
 }

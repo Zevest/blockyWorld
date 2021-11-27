@@ -2,7 +2,7 @@ class Application {
     static ColPrefix() {
         return "Col_";
     }
-    static TargetFrameRate = 165
+    static TargetFrameRate = 165;
     
 
 
@@ -12,12 +12,14 @@ class Application {
         this.canvas.id = "container";
         //console.log(this.canvas.style.cursor);
         Input.Init(this.canvas, this.TargetFrameRate);
+        Noise.defaultSeed = 156;
+        //WorkerManager.sendMessage("test");
         this.clock = new THREE.Clock();
 
         this.scene = new THREE.Scene();
         this.rayCaster = new THREE.Raycaster();
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
-        this.camera.position.set(0, 1, 4);
+        this.camera.position.set(0, 70, 4);
         
 
         this.camera.matrixAutoUpdate = false;
@@ -71,6 +73,7 @@ class Application {
     initMaterials() {
         this.materials = {};
         this.materials.default = new THREE.MeshStandardMaterial({color: 0xe0e0e0});
+        this.materials.blue = new THREE.MeshPhysicalMaterial({color: 0xe0e0e0, transparent: true, opacity: 0.5});
         this.materials.chunk = ChunkMesh.createMaterial();
         this.addColorMaterial(1, 1, 1);
     }
@@ -85,7 +88,7 @@ class Application {
         this.scene.add(this.skyLight);
         this.scene.add(new THREE.HemisphereLightHelper(this.skyLight, 50));
 
-        this.sunLight = new THREE.DirectionalLight(0xffffff, 1.0);
+        this.sunLight = new THREE.DirectionalLight(0xffffff, 0.7);
         this.sunLight.castShadow = true;
         this.sunLight.name = "Sun Light";
         
@@ -99,41 +102,52 @@ class Application {
         this.scene.add(this.sunLight);
         this.scene.add(new THREE.DirectionalLightHelper(this.sunLight, 5));
 
-        this.ground = new THREE.Mesh(this.planeGeometry, this.materials.default);        
+        this.ground = new THREE.Mesh(this.planeGeometry, this.materials.blue);        
         this.ground.rotateX(-Math.PI /2.0);
         this.ground.name = "Ground";
-        this.ground.position.y = -1;
+        this.ground.position.y = 63.8;
         this.ground.scale.x = 100;
         this.ground.scale.y = 100;
         this.ground.receiveShadow = true;
         this.scene.add( new THREE.AxesHelper(100))
         this.scene.add( new THREE.GridHelper(100, 100));
-        /*this.chunk1 = new Chunk(0, 0);
-        this.chunk2 = new Chunk(1, 0);
-        //this.chunk.generateRandom(BlockData.BLOCK_LIST);
-        this.chunk1.generateNoise(BlockData.BLOCK_LIST);
-        this.chunk2.generateNoise(BlockData.BLOCK_LIST);
-        //this.buildChunkMesh(this.chunk);
-        console.log(this.materials);
-        this.chunkData1 = ChunkMesh.build(this.chunk1, this.materials.chunk);
-        this.chunkData2 = ChunkMesh.build(this.chunk2, this.materials.chunk);
-        
-        
-        let Object3DChunk1 = new THREE.Object3D();
-        ChunkMesh.addToObject(Object3DChunk1, this.chunkData1);
-        Object3DChunk1.position.set(this.chunk1.x * 16, 0, this.chunk1.y * 16)
 
-        let Object3DChunk2 = new THREE.Object3D();
-        ChunkMesh.addToObject(Object3DChunk2, this.chunkData2);
-        Object3DChunk2.position.set(this.chunk2.x * 16, 0, this.chunk2.y * 16)
+        this.sphereHelper = new THREE.Mesh(this.boxGeometry, this.materials.default);
+        this.sphereHelper.scale.set(0.2, 0.2, 0.2);
+        this.scene.add(this.sphereHelper);
 
-        console.log(Object3DChunk1, Object3DChunk2);
-        this.scene.add(Object3DChunk1)
-        this.scene.add(Object3DChunk2)*/
-        this.world = new World("Hello", 1561);
+
+        /*
+            this.chunk1 = new Chunk(0, 0);
+            this.chunk2 = new Chunk(1, 0);
+            this.chunk.generateRandom(BlockData.BLOCK_LIST);
+            this.chunk1.generateNoise(BlockData.BLOCK_LIST);
+            this.chunk2.generateNoise(BlockData.BLOCK_LIST);
+            this.buildChunkMesh(this.chunk);
+            console.log(this.materials);
+            this.chunkData1 = ChunkMesh.build(this.chunk1, this.materials.chunk);
+            this.chunkData2 = ChunkMesh.build(this.chunk2, this.materials.chunk);
+            
+            
+            let Object3DChunk1 = new THREE.Object3D();
+            ChunkMesh.addToObject(Object3DChunk1, this.chunkData1);
+            Object3DChunk1.position.set(this.chunk1.x * 16, 0, this.chunk1.y * 16)
+
+            let Object3DChunk2 = new THREE.Object3D();
+            ChunkMesh.addToObject(Object3DChunk2, this.chunkData2);
+            Object3DChunk2.position.set(this.chunk2.x * 16, 0, this.chunk2.y * 16)
+
+            console.log(Object3DChunk1, Object3DChunk2);
+            this.scene.add(Object3DChunk1)
+            this.scene.add(Object3DChunk2)
+        */
+
+        this.world = new World("Hello", 15);
         this.world.initWorld();
+        this.world.setMaterials(this.materials.chunk);
         this.world.generateWorld();
-        this.world.generateMeshes(this.materials.chunk);
+        
+        //this.world.generateMeshes();
         //this.world.world.position.y = -15;
         this.scene.add(this.world.world);
         this.scene.add(new THREE.BoxHelper(this.world.world, 0x55ff6a));
@@ -161,21 +175,27 @@ class Application {
         
     }
 
-    addColorMaterial(r,g,b) {
+    addColorMaterial(r, g, b, a) {
         let color = 0;
         switch(arguments.length) {
             case 1:
                 color = Uint24(r);
                 break;
             default:
+            case 3:
                 color = Color(r,g,b);
+            case 4:
+                color = Color32(r,g,b,a);
                 break;
         }
         
         let matName = Application.ColPrefix() + color;
-        if(this.materials[matName] == undefined){
+        if(this.materials[matName] == undefined && a == undefined){
 
             this.materials[matName] = new THREE.MeshStandardMaterial({color});
+        }else{
+            this.materials[matName] = new THREE.MeshPhysicalMaterial(
+                {color: color, transparent: true, opcaity: a/255});
         }
         return this.materials[matName];
     }
@@ -193,10 +213,7 @@ class Application {
     }
     */
     start() {
-        //let red  = this.addColorMaterial(255,0,0);
-        //let green  = this.addColorMaterial(0,255,0);
-        // let blue  = this.addColorMaterial(0,0,255);
-        Input.onClick = (button) => {
+        Input.onMouseDown = (button) => {
             if(!Input.hasMouseLock) return;
             let pos = World.ToLocalCoord(this.camera.position.x, this.camera.position.y, this.camera.position.z);
             //console.log(pos);
@@ -211,11 +228,11 @@ class Application {
             if(hits.length > 0 && hits[0].distance > 0.8 && hits[0].distance < 5){
                 let hitpos = hits[0].point;
                 //if(Math.sign(forward[forward[0]]) == Math.sign(normal[normal[0]])) return;
-                if(button == 1){
+                if(button == 3){
                     hitpos.addScaledVector(hits[0].face.normal, 0.5);
                     World.currentWorld.setBlock(this.currentBlock, hitpos.x, hitpos.y, hitpos.z, false);
                 }
-                else if(button == 3){
+                else if(button == 1){
                     hitpos.addScaledVector(hits[0].face.normal, -0.5);
                     World.currentWorld.setBlock(-1, hitpos.x, hitpos.y, hitpos.z, false);
                 }
@@ -227,36 +244,38 @@ class Application {
                 }
                 
             }
-            
             chunksObjs.forEach((obj) => {
                 this.world.updateChunk(obj, this.world.chunks[obj.name]);
             });
 
             console.log(button);
-            /*for(let ids of chunksID){
-                let chunkObj = World.currentWorld.world.getObjectByName(ids);
-                if(chunkObj){
-                    console.log(chunkObj, chunkObj instanceof THREE.Object3D);
-                    hits = this.rayCaster.intersectObject(chunkObj);
-                }else{
-                    console.error("cannot find chunk", ids);
-                }
-            }*/
-
-            //let hit = 
-            //console.log(hit[0].point, hit[0]);
-            //World.currentWorld.setBlock(0, hit[0].point.x, hit[0].point.y, hit[0].point.z);
         }
         this.cameraController = addComponent(this.camera, CameraController);
         BlockInfo.initData("../../res/json/block.json", "../../res/json/MinecraftTiles.json", 
         "../../res/shader/block_cross_vert.glsl", "../../res/shader/block_cross_frag.glsl",
         () => this.setup());
+
     }
 
     setup() {
+        WorkerManager.initWorkers(4, BlockWorldEventListeners, 
+            {blocks: BlockInfo.blocks, tileSetInfo: BlockInfo.tileSetInfo, unit: BlockInfo.unit},
+            {TRANSPARENT_LIST: BlockData.TRANSPARENT_LIST, BLOCK_TYPE: BlockData.BLOCK_TYPE, UV_TYPE: BlockData.UV_TYPE, BLOCK_LIST:BlockData.BLOCK_LIST},
+        );
+        let build = 0;
+        WorkerManager.done = () =>{
+            //console.log("done");
+            //for(let i = 0; i< WorkerManager.workerCount; ++i, WorkerManager.sendMessage("end"));
+            //for(let i = 0; i< WorkerManager.workerCount; WorkerManager.workers[i++].terminate());
+            if(build++ == 0){
+                WorkerManager.buildChunkMesh(this.world, this.world.chunks["0;0"]);
+            }
+            //this.world.generateMeshes(this.materials.chunk);
+        };
         this.initMaterials();
         this.initPhysics();
         this.initScene(); 
+        //setTimeout(this.mainLoop, this.TargetFrameRate);
         this.mainLoop();
     }
     /*
@@ -330,8 +349,17 @@ class Application {
 
     mainLoop() {
         let deltaTime = this.clock.getDelta();
+        let start = this.clock.getElapsedTime();
         this.update(deltaTime);
         this.draw();
-        requestAnimationFrame(() => this.mainLoop());
+        let deltaDraw = this.clock.getElapsedTime() - start;
+        setTimeout(() => {
+                requestAnimationFrame(() =>{
+                    this.mainLoop()
+                })
+            },
+            1000 / Application.TargetFrameRate - deltaDraw
+        );
+        
     }
 }

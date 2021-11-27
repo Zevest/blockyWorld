@@ -325,6 +325,7 @@ function addFace(position, vertices, vertOffset, uvs, uvOffset, blockData, direc
              vertices[vertOffset++] = -SIZE.y + position[(vertOffset-1)%3]
              vertices[vertOffset++] = -SIZE.z + position[(vertOffset-1)%3]
 
+            //console.log(blockData);
             blockData.getUVCross(blockData.face.front).forEach( v => uvs[pos++] = v);
             
     }

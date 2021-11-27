@@ -9,15 +9,15 @@ class Chunk {
         this.x = x;
         this.y = y;
         this.id = `${x};${y}`;
-        this.blockData = new Array(Chunk.width * Chunk.depth * Chunk.height).fill(-1);
+        this.blockData = [];//new Array(Chunk.width * Chunk.depth * Chunk.height).fill(-1);
         this.isUpdating = false;
-        this.transparent_geometry;
-        this.opaque_geomtry;
+        //this.transparent_geometry = null;
+        //this.opaque_geometry;
 
-        this.transparent_BlockMeshData;
-        this.opaque_BlockMeshData;
+        //this.transparent_BlockMeshData;
+        //this.opaque_BlockMeshData;
 
-        this.chunk_obj;
+        //this.chunk_obj;
         if(Chunk.blockCheck == undefined) {
             Chunk.blockCheck = []
             for(let i = -1; i <2; ++i){
@@ -55,6 +55,7 @@ class Chunk {
     }
 
     generateNoise(blockList) {
+        /*
         for(let i = 0; i < Chunk.width; ++i){
             for(let k = 0; k < Chunk.depth; ++k) {
                 let posX = this.x + i/Chunk.width;
@@ -70,18 +71,18 @@ class Chunk {
                 //debugger;
                 for(let j = 0; j < height-4; ++j) { this.setBlock(blockList[0].id, i, j, k)}
                 for(let j = height-4; j < height; ++j) {
-                    if(j > 128) this.setBlock(blockList[48].id, i, j, k)
+                    if(j > 100) this.setBlock(blockList[48].id, i, j, k)
                     else this.setBlock(blockList[1].id, i, j, k)
                 };
                 
-                if(height > 128) this.setBlock(blockList[49].id, i, height, k);
-                else if(height > 100) this.setBlock(blockList[2].id, i, height, k);
+                if(height > 100) this.setBlock(blockList[49].id, i, height, k);
+                else if(height > 64) this.setBlock(blockList[2].id, i, height, k);
                 else this.setBlock(blockList[14].id, i, height, k);
                 
                // this.setBlock(blockList[31].id, i, height+1, k);
             }
         }
-        
+        */
         //console.log(count, this.blockData);
     }
 
@@ -107,38 +108,78 @@ class Chunk {
         return index;
     }
 
-    getBlock(x, y, z) {
+    getBlock(x, y, z, borders) {
         if(x == -1 || x == Chunk.width || z == -1 || z == Chunk.depth){
             //if(this.x == 0 && this.y == 0)  debugger;
-            return this.getBlockFromNeighbourChunk(x, y, z);
+            return this.getBlockFromNeighbourChunk(x, y, z, borders);
         }
         if(x < -1 || x >= Chunk.width || y < 0 || y >= Chunk.height || z < -1 || z >= Chunk.depth) return -1;
         let index = x + z * Chunk.width + y * Chunk.width * Chunk.depth;
         return this.blockData[index];
     }
 
-    getBlockFromNeighbourChunk(x, y, z) {
+    getChunkBorder(side) {
+        let res, index, offPos;
+        switch(side){
+            case 'n':
+                res = new Array(Chunk.height * Chunk.width)
+                offPos = 15 * Chunk.width;
+                for(let i  = 0, x = 0, y = 0; i < res.length; ++i, x = i%Chunk.width, y = Math.floor(i / Chunk.width)){
+                    index = x + offPos + y * Chunk.width * Chunk.depth
+                    res[i] = this.blockData[index];
+                }
+                break;
+            case 's':
+                res = new Array(Chunk.height * Chunk.width)
+                for(let i  = 0, x = 0, y = 0; i < res.length; ++i, x = i%Chunk.width, y = Math.floor(i / Chunk.width)){
+                    index = x + y * Chunk.width * Chunk.depth
+                    res[i] = this.blockData[index];
+                }
+                break;
+            case 'e':
+                res = new Array(Chunk.height * Chunk.depth)
+                for(let i  = 0, z = 0, y = 0; i < res.length; ++i, z = i%Chunk.depth, y = Math.floor(i / Chunk.depth)){
+                    index = 15 + z * Chunk.width + y * Chunk.width * Chunk.depth
+                    res[i] = this.blockData[index];
+                }
+                break;
+            case 'w':
+                res = new Array(Chunk.height * Chunk.depth)
+                for(let i  = 0, z = 0, y = 0; i < res.length; ++i, z = i%Chunk.depth, y = Math.floor(i / Chunk.depth)){
+                    index = z * Chunk.width + y * Chunk.width * Chunk.depth
+                    res[i] = this.blockData[index];
+                }
+                break;
+        }
+        return res;
+    }
+
+    getBlockFromNeighbourChunk(x, y, z, borders) {
         let chunkX = this.x, chunkY = this.y, chunkData;
         switch(x){
             case -1:
-                chunkData = World.currentWorld.chunks[World.chunkID(--chunkX, chunkY)];
+                if(borders) return borders.w[y * Chunk.depth + z];
+                //chunkData = World.currentWorld.chunks[World.chunkID(--chunkX, chunkY)];
                 if(!chunkData) return -1;
                 return chunkData.getBlock(Chunk.width-1, y, z)
                 
             case Chunk.width:
-                chunkData = World.currentWorld.chunks[World.chunkID(++chunkX, chunkY)];
+                if(borders) return borders.e[y * Chunk.depth + z];
+                //chunkData = World.currentWorld.chunks[World.chunkID(++chunkX, chunkY)];
                 if(!chunkData) return -1;
                 return chunkData.getBlock(0, y, z)
                 
         }
         switch(z){
             case -1:
-                chunkData = World.currentWorld.chunks[World.chunkID(chunkX, --chunkY)];
+                if(borders) return borders.s[y * Chunk.width + x];
+                //chunkData = World.currentWorld.chunks[World.chunkID(chunkX, --chunkY)];
                 if(!chunkData) return -1;
                 return chunkData.getBlock(x, y, Chunk.depth-1)
                 
             case Chunk.depth:
-                chunkData = World.currentWorld.chunks[World.chunkID(chunkX, ++chunkY)];
+                if(borders) return borders.n[y * Chunk.width + x];
+                //chunkData = World.currentWorld.chunks[World.chunkID(chunkX, ++chunkY)];
                 if(!chunkData) return -1;
                 return chunkData.getBlock(x, y, 0)
                 
@@ -157,6 +198,20 @@ class Chunk {
         for(let i = 0; i < Chunk.blockCheck.length; ++i) {
             let dir = Chunk.blockCheck[i];
             blockID = this.getBlock(x + dir[0], y + dir[1], z + dir[2]);
+            if(blockID < 0 || BlockData.TRANSPARENT_LIST[blockID]) {
+                face |= Chunk.facesOrder[i];
+            }
+        }
+        //if(blockID > -1)
+        return face;
+        
+    }
+
+    getBlockRenderedFace2(x, y, z, borders) {
+        let face = 0, blockID;
+        for(let i = 0; i < Chunk.blockCheck.length; ++i) {
+            let dir = Chunk.blockCheck[i];
+            blockID = this.getBlock(x + dir[0], y + dir[1], z + dir[2], borders);
             if(blockID < 0 || BlockData.TRANSPARENT_LIST[blockID]) {
                 face |= Chunk.facesOrder[i];
             }

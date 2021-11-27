@@ -2,7 +2,7 @@ class BlockInfo {
     static blocks = {}
     static tileSetInfo = {};
     static isReady = 0;
-    static requestCount = 4;
+    static requestCount = 2;
     static shaders = {fragment: undefined, vertex: undefined};
     static initData(blockFilename, tileSetFileName, vertexShaderFileName, fragmentShaderFileName, doneCallback) {
         Request.requestFile(blockFilename, "json",
@@ -31,7 +31,7 @@ class BlockInfo {
                 }
             }
         )
-        Request.requestFile(vertexShaderFileName, "text",
+        /*Request.requestFile(vertexShaderFileName, "text",
             (result) => {
                 BlockInfo.shaders.vertex = result;
                 if(++BlockInfo.isReady >= BlockInfo.requestCount){
@@ -48,7 +48,7 @@ class BlockInfo {
                     doneCallback();
                 }
             }
-        )
+        )*/
     }
 
 

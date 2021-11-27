@@ -180,6 +180,174 @@ class ChunkMesh {
     }
 
 
+    static buildGeometry(chunk, borders){
+        let geometry = {
+            block: {
+                opaque: null,
+                semi:null,
+                transparent:null,
+            },
+            cross:null
+        };
+        let op_vert = [], op_index = [], op_uv = []
+        let st_vert = [], st_index = [], st_uv = []
+        let tr_vert = [], tr_index = [], tr_uv = []
+        let cr_pos_instanced = [], cr_uv_instanced = [], cr_dim_instanced = [];
+        let cr_vert = [], cr_index = [], cr_uv = []
+        
+        createBlock(BlockData.BLOCK_LIST[0],cr_vert, cr_index, [], BLOCK.DIAGONAL, [0,0,0]);
+        cr_uv = BlockData.BLOCK_LIST[0].getUVCross(BlockData.BLOCK_LIST[0].face.front);
+       
+
+        for(let i = 0; i < Chunk.width; ++i)
+            for(let j = 0; j < Chunk.height; ++j)
+                for(let k = 0; k < Chunk.depth; ++k){
+                    let faces = 0
+                    let bIndex = chunk.getBlock(i, j, k);
+                    if(bIndex == -1) continue;
+                    let bdata = BlockData.BLOCK_LIST[bIndex];
+                    switch(bdata.block.type){
+                        case BlockData.BLOCK_TYPE[0]:
+                        {
+                            faces = chunk.getBlockRenderedFace2(i, j, k, borders);
+                            createBlock(bdata, op_vert, op_index, op_uv, faces, [i, j, k]);
+                            break;
+                        }
+                        case BlockData.BLOCK_TYPE[1]:
+                        {
+                            faces = chunk.getBlockRenderedFace2(i, j, k, borders);
+                            createBlock(bdata, st_vert, st_index, st_uv, faces, [i, j, k]);
+                            break;
+                        }
+                        case BlockData.BLOCK_TYPE[2]:
+                        {
+                            faces = chunk.getBlockRenderedFace2(i, j, k, borders);
+                            createBlock(bdata, tr_vert, tr_index, tr_uv, faces, [i, j, k]);
+                            break;
+                        }
+                        case BlockData.BLOCK_TYPE[3]:
+                        {
+                            faces = BLOCK.DIAGONAL;
+                            cr_pos_instanced.push(i, j, k);
+                            let tmp = bdata.getUVRect(bdata.face.front);
+                            const prop = BlockInfo.getPropertyObject(BlockInfo.getTileFromName(bdata.face.front).properties);
+                            let intDim = ((prop.xMin) & 0xff) | ((prop.xMax) & 0xff) << 8 | ((prop.yMin) & 0xff) << 16 | ((prop.yMax) & 0xff) << 24;
+                            cr_dim_instanced.push(intDim);
+                            cr_uv_instanced.push(tmp[0], tmp[1]);
+                            break;
+                        }
+                    }
+                }
+
+        
+        let block_opaque_vertices = new Float32Array(op_vert);
+        let block_opaque_uvs = new Float32Array(op_uv);
+
+        geometry.block.opaque = new THREE.BufferGeometry();
+        geometry.block.opaque.setAttribute("position",
+                new THREE.BufferAttribute(block_opaque_vertices, 3));
+        geometry.block.opaque.setAttribute("uv",
+             new THREE.BufferAttribute(block_opaque_uvs, 2));
+        geometry.block.opaque.setIndex(op_index);
+        geometry.block.opaque.computeVertexNormals();
+
+        let block_semi_transparent_vertices = new Float32Array(st_vert);
+        let block_semi_transparent_uvs = new Float32Array(st_uv);
+
+        geometry.block.semi = new THREE.BufferGeometry();
+        geometry.block.semi.setAttribute("position",
+                new THREE.BufferAttribute(block_semi_transparent_vertices, 3));
+        geometry.block.semi.setAttribute("uv",
+                new THREE.BufferAttribute(block_semi_transparent_uvs, 2));
+        geometry.block.semi.setIndex(st_index);
+        geometry.block.semi.computeVertexNormals();
+
+        
+
+        let block_transparent_vertices = new Float32Array(tr_vert);
+        let block_transparent_uvs = new Float32Array(tr_uv);
+
+        geometry.block.transparent = new THREE.BufferGeometry();
+        geometry.block.transparent.setAttribute("position",
+                new THREE.BufferAttribute(block_transparent_vertices, 3));
+        geometry.block.transparent.setAttribute("uv",
+                new THREE.BufferAttribute(block_transparent_uvs, 2));
+        geometry.block.transparent.setIndex(tr_index);
+        geometry.block.transparent.computeVertexNormals();
+        
+
+    
+        let cross_instance_position_offset = new Float32Array(cr_pos_instanced);
+        let cross_instance_uvs = new Float32Array(cr_uv_instanced);
+        let cross_instance_dim = new Int32Array(cr_dim_instanced);
+        let cross_transparent_vertices = new Float32Array(cr_vert);
+        let cross_transparent_uvs = new Float32Array(cr_uv);
+
+        geometry.cross = new THREE.InstancedBufferGeometry();
+        geometry.cross.setAttribute("position",
+                new THREE.BufferAttribute(cross_transparent_vertices, 3));
+        geometry.cross.setAttribute("uv", 
+                new THREE.BufferAttribute(cross_transparent_uvs, 2));
+        geometry.cross.setIndex(cr_index);
+        
+        geometry.cross.setAttribute("instancePos", 
+                new THREE.InstancedBufferAttribute(cross_instance_position_offset, 3));
+        geometry.cross.setAttribute("instanceUv", 
+                new THREE.InstancedBufferAttribute(cross_instance_uvs, 2));
+        geometry.cross.setAttribute("instanceDim",
+                new THREE.InstancedBufferAttribute(cross_instance_dim, 1));
+        geometry.cross.computeVertexNormals();
+        return {geometry, instanceCount: cr_uv_instanced.length / 2};
+    }
+
+    static MeshFromGeometry(geometry, materials, instanceCount){
+        let mesh = {
+            block: {
+                opaque: null,
+                semi:null,
+                transparent:null,
+            },
+            cross:null
+        };
+
+        mesh.block.opaque = new THREE.Mesh(
+                geometry.block.opaque,
+                materials.block.opaque);
+        mesh.block.opaque.name = "opaque_block_mesh";
+        mesh.block.opaque.castShadow = true;
+        mesh.block.opaque.renderOrder = 4;        
+
+
+        mesh.block.semi = new THREE.Mesh(
+                geometry.block.semi, materials.block.semi);
+        mesh.block.semi.name = "semi_transparent_block_mesh";
+        mesh.block.semi.castShadow = true;
+        mesh.block.semi.renderOrder = 1;        
+
+
+        mesh.block.transparent = new THREE.Mesh(
+                geometry.block.transparent, materials.block.transparent);
+        mesh.block.transparent.name = "transparent_block_mesh";
+        mesh.block.transparent.castShadow = true;
+        mesh.block.transparent.renderOrder = 3;
+
+
+        const INSTANCE_COUNT = instanceCount;
+        mesh.cross = new THREE.InstancedMesh(
+                geometry.cross, materials.cross, INSTANCE_COUNT);
+        mesh.cross.renderOrder = 2;
+        
+        
+        const dummy = new THREE.Object3D();
+        for (let i = 0; i < INSTANCE_COUNT; i++) {
+            mesh.cross.setMatrixAt(i, dummy.matrix)
+        }
+        mesh.cross.name = "transparent_cross_mesh";
+        mesh.cross.castShadow = true;
+        //console.log("geometry", geometry);
+        return {geometry, mesh};
+    }
+
     static build(chunkData, materials) {
         const chunkMeshs = {
             geometry:{
@@ -352,7 +520,7 @@ class ChunkMesh {
         object3D.add(chunkMesh.mesh.block.semi);
         object3D.add(chunkMesh.mesh.block.transparent);
         object3D.add(chunkMesh.mesh.cross);
-        object3D.userData.chunkMeshData = chunkMesh;
+        //object3D.userData.chunkMeshData = chunkMesh;
     }
 
     static deleteData(object3DChunk) {
