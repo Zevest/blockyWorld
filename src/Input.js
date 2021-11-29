@@ -1,3 +1,7 @@
+const M_LEFT = 1;
+const M_MIDDLE = 2;
+const M_RIGHT = 3;
+
 class Input {
     static keyBoardPress = {};
     static mouseEvent = {button: {}, position:{x:0, y:0}, move:{x:0, y:0, changed:false}};
@@ -9,6 +13,18 @@ class Input {
     static onKeyUp = null;
     static onMouseDown = null;
     static onMouseUp = null;
+
+    static get M_LEFT() {
+        return M_LEFT;
+    }
+    
+    static get M_MIDDLE() {
+        return M_MIDDLE;
+    }
+
+    static get M_RIGHT() {
+        return M_RIGHT;
+    }
 
     static Init (obj, updateRate = 60) {
         window.addEventListener("focus",() => {Input.onFocus(obj);});
@@ -128,8 +144,8 @@ class Input {
     static updateInput() {
         if(Input.mouseEvent.move.changed){
             Input.mouseEvent.move.changed = false;
-            Input.mouseEvent.move.x = 0;
-            Input.mouseEvent.move.x = 0;
+            //Input.mouseEvent.move.x = 0;
+            //Input.mouseEvent.move.y = 0;
         }
     }
 }
