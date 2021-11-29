@@ -75,10 +75,13 @@ class Chunk {
                 };
                 
                 if(height > 128) this.setBlock(blockList[49].id, i, height, k);
-                else if(height > 100) this.setBlock(blockList[2].id, i, height, k);
+                else if(height > 100){
+                    this.setBlock(blockList[2].id, i, height, k);
+                    this.setBlock(blockList[31].id, i, height+1, k);
+                }
                 else this.setBlock(blockList[14].id, i, height, k);
                 
-               // this.setBlock(blockList[31].id, i, height+1, k);
+                
             }
         }
         
@@ -153,11 +156,13 @@ class Chunk {
     }
 
     getBlockRenderedFace(x, y, z) {
-        let face = 0, blockID;
+        let face = 0, blockID, myBlockID = this.getBlock(x, y, z);
         for(let i = 0; i < Chunk.blockCheck.length; ++i) {
             let dir = Chunk.blockCheck[i];
             blockID = this.getBlock(x + dir[0], y + dir[1], z + dir[2]);
-            if(blockID < 0 || BlockData.TRANSPARENT_LIST[blockID]) {
+            if(blockID < 0 
+                || (BlockData.TRANSPARENT_LIST[blockID] && !BlockData.TRANSPARENT_LIST[myBlockID]) 
+                || BlockData.CROSS_LIST[blockID]) {
                 face |= Chunk.facesOrder[i];
             }
         }

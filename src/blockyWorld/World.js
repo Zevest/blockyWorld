@@ -1,6 +1,6 @@
 class World {
     static currentWorld;
-    static range = 8;
+    static range = 3;
     constructor(name, seed){
         this.name = name;
         this.seed = seed;
@@ -21,6 +21,10 @@ class World {
                 this.chunks[World.chunkID(i,j)] = new Chunk(i, j);
                 this.chunks[World.chunkID(i,j)].generateNoise(BlockData.BLOCK_LIST);
             }
+        /*this.chunks[World.chunkID(0,0)] = new Chunk(0,0);
+        this.chunks[World.chunkID(0,0)].generateNoise(BlockData.BLOCK_LIST);
+        this.chunks[World.chunkID(-1,0)] = new Chunk(-1,0);
+        this.chunks[World.chunkID(-1,0)].generateNoise(BlockData.BLOCK_LIST);*/
     }
 
     static chunkID(x, y) {
@@ -40,6 +44,67 @@ class World {
         }
     }
 
+    addNewChunk(x, y){
+        if(this.chunks[World.chunkID(x, y)]){
+            
+            return
+        };
+        let chunk = new Chunk(x,y);
+        this.chunks[chunk.id] = chunk;
+        chunk.generateNoise(BlockData.BLOCK_LIST);
+        let chunkMesh = ChunkMesh.build(chunk, this.materials);
+        let chunkObj = new THREE.Object3D();
+        chunkObj.name = chunk.id;
+        ChunkMesh.addToObject(chunkObj, chunkMesh);
+        chunkObj.position.set(x * Chunk.width, 0, y * Chunk.depth);
+        this.world.add(chunkObj);
+        
+        let toUpdate = [
+            this.chunks[World.chunkID(x, y+1)],
+            this.chunks[World.chunkID(x, y-1)],
+            this.chunks[World.chunkID(x+1, y)],
+            this.chunks[World.chunkID(x-1, y)]
+        ];
+        for(let cData of toUpdate){
+            if(cData){
+                let obj = this.world.getObjectByName(cData.id);
+                this.updateChunk(obj, cData);
+            }
+            
+        }
+    }
+    
+    unloadChunkMesh(x, y){
+
+        let chunk = this.chunks[World.chunkID(x, y)];
+        if(!chunk) return;
+        let chunkObj = this.world.getObjectByName(chunk.id);
+        if(!chunkObj) return;
+        chunkObj.userData.isLoaded = false;
+        ChunkMesh.deleteData(chunkObj);
+        this.world.remove(chunkObj);
+        chunkObj = null;
+    }
+
+    loadChunkMesh(x, y){
+        let chunk = this.chunks[World.chunkID(x, y)];
+        if(!chunk) {
+            this.addNewChunk(x,y);
+            return;
+        }
+        let chunkObj = this.world.getObjectByName(chunk.id);
+        if(!chunkObj || !chunkObj.userData.isLoaded){
+            chunkObj = new THREE.Object3D();
+            chunkObj.position.set(x * Chunk.width, 0, y * Chunk.depth);
+            chunkObj.name = chunk.id;
+            this.world.add(chunkObj);
+        }
+        if(!chunkObj.userData.isLoaded){
+            let chunkMesh = ChunkMesh.build(chunk, this.materials);
+            ChunkMesh.addToObject(chunkObj, chunkMesh);
+        }
+    }
+
     getBlock(x, y, z) {
         const pos = World.ToLocalCoord(x, y, z);
         const chunk = this.chunks[World.chunkID(pos.chunkX, pos.chunkZ)];
@@ -54,39 +119,36 @@ class World {
     }
 
     setBlock(blockID, x, y, z, update = true) {
-
+        //let nearChunk = this.getNearbyChunk(x, y, z, 1, false);
+        //nearChunk.shift();
+        //console.log(nearChunk);
         const pos = World.ToLocalCoord(x, y, z);
         const cname =World.chunkID(pos.chunkX, pos.chunkZ);
         if(this.chunks[cname]){
             this.chunks[cname].setBlock(blockID, pos.x, pos.y, pos.z);
-            let chunkObj = this.world.getObjectByName(cname);
-            if(!this.chunks[cname].isUpdating){
+            if(!this.chunks[cname].isUpdating && update){
                 this.chunks[cname].isUpdating = true;
-                if(update) {
-                    console.log("updating");
-                    this.updateChunk(chunkObj, this.chunks[cname]);
-                    this.chunks[cname].isUpdating = false;
-                }
+                let chunkObj = this.world.getObjectByName(cname);
+                this.updateChunk(chunkObj, this.chunks[cname]);
+                this.chunks[cname].isUpdating = false;
             }
         }
         
     }
 
-    getNearbyChunk(x, y, z) {
+    getNearbyChunk(x, y, z, bdist = 3, diagonal = true) {
         let chunks = [];
         let pos = World.ToLocalCoord(x, y, z);
         if(this.chunks[World.chunkID(pos.chunkX, pos.chunkZ)]){
             chunks.push(World.chunkID(pos.chunkX, pos.chunkZ));
         }
         let minX = false, maxX = false, minZ = false, maxZ = false;
-
-        const bdist = 3;
         if(pos.x < bdist){
             minX = true;
             if(this.chunks[World.chunkID(pos.chunkX-1, pos.chunkZ)]){
                 chunks.push(World.chunkID(pos.chunkX-1, pos.chunkZ));
             }
-        }else if(pos.x > Chunk.width - bdist){
+        }else if(pos.x > Chunk.width - bdist  - 1/*(pos.chunkX < 0)*/){
             maxX = true;
             if(this.chunks[World.chunkID(pos.chunkX+1, pos.chunkZ)]){
                 chunks.push(World.chunkID(pos.chunkX+1, pos.chunkZ));
@@ -98,31 +160,32 @@ class World {
                 chunks.push(World.chunkID(pos.chunkX, pos.chunkZ-1));
             }
 
-        }else if(pos.z > Chunk.height - bdist){
+        }else if(pos.z > Chunk.depth - bdist - 1/*(pos.chunkZ < 0)*/){
             maxZ = true;
             if(this.chunks[World.chunkID(pos.chunkX, pos.chunkZ+1)]){
                 chunks.push(World.chunkID(pos.chunkX, pos.chunkZ+1));
             }
         }
-
-        if(maxX && maxZ){
-            if(this.chunks[World.chunkID(pos.chunkX+1, pos.chunkZ+1)]){
-                chunks.push(World.chunkID(pos.chunkX+1, pos.chunkZ+1));
+        if(diagonal){
+            if(maxX && maxZ){
+                if(this.chunks[World.chunkID(pos.chunkX+1, pos.chunkZ+1)]){
+                    chunks.push(World.chunkID(pos.chunkX+1, pos.chunkZ+1));
+                }
             }
-        }
-        else if(maxX && minZ){
-            if(this.chunks[World.chunkID(pos.chunkX+1, pos.chunkZ-1)]){
-                chunks.push(World.chunkID(pos.chunkX+1, pos.chunkZ-1));
+            else if(maxX && minZ){
+                if(this.chunks[World.chunkID(pos.chunkX+1, pos.chunkZ-1)]){
+                    chunks.push(World.chunkID(pos.chunkX+1, pos.chunkZ-1));
+                }
             }
-        }
-        else if(minX && minZ){
-            if(this.chunks[World.chunkID(pos.chunkX-1, pos.chunkZ-1)]){
-                chunks.push(World.chunkID(pos.chunkX-1, pos.chunkZ-1));
+            else if(minX && minZ){
+                if(this.chunks[World.chunkID(pos.chunkX-1, pos.chunkZ-1)]){
+                    chunks.push(World.chunkID(pos.chunkX-1, pos.chunkZ-1));
+                }
             }
-        }
-        else if(minX && maxZ){
-            if(this.chunks[World.chunkID(pos.chunkX-1, pos.chunkZ+1)]){
-                chunks.push(World.chunkID(pos.chunkX-1, pos.chunkZ+1));
+            else if(minX && maxZ){
+                if(this.chunks[World.chunkID(pos.chunkX-1, pos.chunkZ+1)]){
+                    chunks.push(World.chunkID(pos.chunkX-1, pos.chunkZ+1));
+                }
             }
         }
         return chunks;

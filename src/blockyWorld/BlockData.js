@@ -1,6 +1,7 @@
 class BlockData {
     static BLOCK_LIST = [];
     static TRANSPARENT_LIST = [];
+    static CROSS_LIST = [];
     static BLOCK_TYPE = [];
     static UV_TYPE = []
     constructor(block, name, id) {
@@ -41,13 +42,15 @@ class BlockData {
             //debugger;
             BlockData.BLOCK_LIST.push(new BlockData(block[objName], objName, i++));
             //console.log()
-            let isTransparent = block[objName].type == "cross_transparent" || block[objName].type == "block_transparent";
+            let isTransparent = block[objName].type == "block_transparent";
+            let isCross = block[objName].type == "cross_transparent";
             let isSmaller = false;
             if(block[objName].properties && block[objName].properties.size){
                 let size = block[objName].properties.size;
                 isSmaller = (size.x < 1 || size.y < 1 || size.z < 1);
             }
             BlockData.TRANSPARENT_LIST.push(isTransparent || isSmaller);
+            BlockData.CROSS_LIST.push(isCross);
         }
     }
     getUVRect(face) {
