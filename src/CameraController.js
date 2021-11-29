@@ -15,7 +15,7 @@ class CameraController extends Component{
         this.tmpeuler = new THREE.Euler( 0, 0, 0, 'YXZ' );
         this.object3D.updateMatrix();
         this.lastPos = new THREE.Vector3();
-        this.sensibility = 0.5;
+        this.sensibility = 0.005;
         this.lastPos.copy(this.object3D.position);
     }
 
@@ -78,16 +78,16 @@ class CameraController extends Component{
             rotY += this.rotationSpeed;
         }
         if(Input.getKey("a")) {
-            rotZ -= this.rotationSpeed;
+            rotZ -= this.rotationSpeed * this.sensibility;
         }
         if(Input.getKey("e")) {
-            rotZ += this.rotationSpeed;
+            rotZ += this.rotationSpeed * this.sensibility;
         }
         if(rotX != 0 || rotY != 0 || rotZ != 0 || !this.object3D.position.equals(this.lastPos)){
             this.tmpeuler.setFromQuaternion(this.object3D.quaternion);
-            this.tmpeuler.y -= rotX * deltaTime;
-            this.tmpeuler.x = clamp(this.tmpeuler.x - (rotY * deltaTime), CameraController.minAngleY, CameraController.maxAngleY);
-            this.tmpeuler.z -= rotZ * deltaTime;
+            this.tmpeuler.y -= rotX /* deltaTime*/;
+            this.tmpeuler.x = clamp(this.tmpeuler.x - (rotY /* deltaTime*/), CameraController.minAngleY, CameraController.maxAngleY);
+            this.tmpeuler.z -= rotZ /* deltaTime*/;
             this.object3D.quaternion.setFromEuler(this.tmpeuler);
             this.object3D.updateMatrix();
         }
