@@ -57,6 +57,10 @@ function clamp(val, min, max) {
     return val;
 }
 
+function dist(x1, y1, x2, y2){
+    return Math.sqrt((x2-x1) *(x2-x1) + (y2-y1)*(y2-y1));
+}
+
 function getClassName(Class) {
     let classDef = `${Class}`;
     let className = classDef.split('{')[0].split(' ')[1].split('(')[0];
