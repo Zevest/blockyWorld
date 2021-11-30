@@ -41,7 +41,7 @@ class CameraController extends Component{
         this.object3D.getWorldDirection(this.forward);
         this.right.crossVectors(this.up, this.forward);
         this.right.normalize();
-        const mult = (Input.getKey("Control") ? 3 : 1);
+        const mult = (Input.getKey("Shift") ? 3 : 1);
         if(Input.getKey('z')) {
             this.object3D.position.addScaledVector(this.forward, mult * this.moveSpeed * deltaTime);
         }
@@ -57,7 +57,7 @@ class CameraController extends Component{
         if(Input.getKey(' ')) {
             this.object3D.position.addScaledVector(this.up,  mult * this.moveSpeed * deltaTime);
         }
-        if(Input.getKey("Shift")) {
+        if(Input.getKey("Control")) {
             this.object3D.position.addScaledVector(this.up,  mult * -this.moveSpeed * deltaTime);
         }
         let rotX = 0, rotY = 0, rotZ = 0, move = Input.getMouseMovement();
@@ -65,6 +65,8 @@ class CameraController extends Component{
             rotX += this.rotationSpeed * move.x * this.sensibility;
             rotY += this.rotationSpeed * move.y * this.sensibility;
         }
+        this.object3D.zoom = 1 + Input.getKey('x');
+        this.object3D.updateProjectionMatrix();
         if(Input.getKey("ArrowLeft")) {
             rotX -= this.rotationSpeed;
         }
