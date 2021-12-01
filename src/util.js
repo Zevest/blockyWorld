@@ -57,8 +57,14 @@ function clamp(val, min, max) {
     return val;
 }
 
-function dist(x1, y1, x2, y2){
-    return Math.sqrt((x2-x1) *(x2-x1) + (y2-y1)*(y2-y1));
+function dist(x1, y1, z1, x2, y2, z2){
+    switch(arguments.length){
+        case 4:
+            return Math.sqrt((z1-x1) *(z1-x1) + (x2-y1)*(x2-y1));
+        default:
+        case 6:
+            return Math.sqrt((x2-x1) *(x2-x1) + (y2-y1)*(y2-y1) + (z2-z1)*(z2-z1));
+    }
 }
 
 function getClassName(Class) {
