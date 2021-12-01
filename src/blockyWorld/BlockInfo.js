@@ -2,7 +2,7 @@ class BlockInfo {
     static blocks = {}
     static tileSetInfo = {};
     static isReady = 0;
-    static requestCount = 4;
+    static requestCount = 2;
     static shaders = {fragment: undefined, vertex: undefined};
     static initData(blockFilename, tileSetFileName, vertexShaderFileName, fragmentShaderFileName, doneCallback) {
         Request.requestFile(blockFilename, "json",
@@ -25,24 +25,6 @@ class BlockInfo {
                 BlockInfo.tileSetInfo = JSON.parse(result);
                 BlockInfo.tileSetInfo.fileLocation = tileSetFileName.substr(0, tileSetFileName.lastIndexOf("/")) + "/";
                 BlockInfo.unit = BlockInfo.tileSetInfo.tilewidth / BlockInfo.tileSetInfo.imagewidth;
-                if(++BlockInfo.isReady >= BlockInfo.requestCount){
-                    BlockData.initBlockList(BlockInfo.blocks);
-                    doneCallback();
-                }
-            }
-        )
-        Request.requestFile(vertexShaderFileName, "text",
-            (result) => {
-                BlockInfo.shaders.vertex = result;
-                if(++BlockInfo.isReady >= BlockInfo.requestCount){
-                    BlockData.initBlockList(BlockInfo.blocks);
-                    doneCallback();
-                }
-            }
-        )
-        Request.requestFile(fragmentShaderFileName, "text",
-            (result) => {
-                BlockInfo.shaders.fragment = result;
                 if(++BlockInfo.isReady >= BlockInfo.requestCount){
                     BlockData.initBlockList(BlockInfo.blocks);
                     doneCallback();
