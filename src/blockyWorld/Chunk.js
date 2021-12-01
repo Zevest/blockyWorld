@@ -66,6 +66,7 @@ class Chunk {
                 let sample4 = noise.perlin2(posX*0.1, posZ*0.1)*0.2;
                 let mult = noise.perlin2(posX*0.1+0.1, posZ*0.1+0.1);
                 
+                
                 let height = Math.min(128, Math.max(30, Chunk.height/ 2)) + Math.floor(2 *(sample + sample2 +  sample3 + sample4 * mult)*(Chunk.height / 4));
                 //console.log(height);
                 //debugger;
@@ -75,11 +76,40 @@ class Chunk {
                     else this.setBlock(blockList[1].id, i, j, k)
                 };
                 
-                if(height > 128) this.setBlock(blockList[49].id, i, height, k);
-                else if(height > 100){
-                    this.setBlock(blockList[2].id, i, height, k);
-                    this.setBlock(blockList[31].id, i, height+1, k);
+                if(height > 128){
+                    this.setBlock(blockList[49].id, i, height, k);
                 }
+                else if(height > 100){
+                   
+                    let vege = noise.perlin2(posX*0.33548 + 0.2, posZ*0.45168 + 0.2);
+                    if(Math.abs(vege) < 0.05){
+                        if(Math.floor(Math.random() * 50) < 2)
+                            this.setBlock(blockList[44].id, i, height+1, k);
+                    }
+                    else if(vege < 0.1){
+                        let p = Math.floor(Math.random() * 50)
+                        switch(p){
+                            case 0:
+                                this.setBlock(blockList[9].id, i, height+1, k);
+                            break;
+                            
+                            case 4:
+                                this.setBlock(blockList[10].id, i, height+1, k);
+                            break;
+                            default:
+                                if (Math.random() < 0.3)
+                                    this.setBlock(blockList[31].id, i, height+1, k);
+                            break;
+                        }
+                    }
+                    else if (Math.abs(vege) < 0.2)
+                    {
+                        this.setBlock(blockList[31].id, i, height+1, k);
+                    }
+                    this.setBlock(blockList[2].id, i, height, k);
+                    
+                }
+                
                 else this.setBlock(blockList[14].id, i, height, k);
                 
                 

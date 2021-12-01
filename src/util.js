@@ -72,3 +72,7 @@ function getClassName(Class) {
     let className = classDef.split('{')[0].split(' ')[1].split('(')[0];
     return className;
 }
+
+function lerp(v, a,b) {
+    return a + (b - a) * v;
+}

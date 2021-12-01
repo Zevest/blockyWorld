@@ -1,4 +1,4 @@
-const DEBUG = true;
+const DEBUG = false;
 class Application {
     static ColPrefix() {
         return "Col_";
@@ -13,10 +13,15 @@ class Application {
         this.canvas2D = document.createElement("canvas");
         this.canvas2D.id = "2D";
         this.ctx = this.canvas2D.getContext("2d");
-
+        this.dayColor = {r:191, g:209, b:229};
+        this.nightColor = {r: 10, g:10, b: 20};
+        this.lerpColor = {r:0, g:0, b:0};
 
         Input.Init(this.canvas, this.TargetFrameRate);
         this.clock = new THREE.Clock();
+        this.dayLength = 1200;
+        this.time = this.dayLength / 4;
+        this.timeScale = 1.0;
         
         this.scene = new THREE.Scene();
         this.rayCaster = new THREE.Raycaster();
@@ -32,7 +37,6 @@ class Application {
         //this.renderer.shadowMap.type = THREE.VSMShadowMap;
         //this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
         this.renderer.shadowMap.type = THREE.PCFShadowMap
-        this.resizeViewPort();
         
 
         document.body.appendChild(this.renderer.domElement);
@@ -41,7 +45,7 @@ class Application {
         this.boxGeometry = new THREE.BoxGeometry(1, 1, 1);
         this.planeGeometry = new THREE.PlaneGeometry(1, 1);
 
-
+        
         this.currentBlock = 0;
         this.hits = [];
 
@@ -98,10 +102,7 @@ class Application {
     }
 
     initScene() {
-
-
-        
-        this.skyLight = new THREE.AmbientLight(Color(128));//new THREE.HemisphereLight(0xbfd1e5);
+        this.skyLight = new THREE.AmbientLight(Color(128)); //new THREE.HemisphereLight(0xbfd1e5);
         //this.skyLight.position.set(new THREE.Vector3(0, 0, 0));
         this.skyLight.name = "SkyLight";
 
@@ -135,21 +136,15 @@ class Application {
        
         
         this.scene.add(this.sunLight); 
-        //this.scene.add(new THREE.DirectionalLightHelper(this.sunLight, 5));
-        this.cameraHelper = new THREE.CameraHelper(this.sunLight.shadow.camera);
+        
         this.ground = new THREE.Mesh(this.planeGeometry, this.materials.blue);
-        this.scene.add(this.cameraHelper);
+        
         this.ground.rotateX(-Math.PI / 2.0);
         this.ground.name = "Ground";
         this.ground.position.y = 100.8;
         this.ground.scale.x = World.range * 2 * 16;
         this.ground.scale.y = World.range * 2 * 16;
         this.ground.receiveShadow = true;
-
-        this.axes = new THREE.AxesHelper(100);
-        this.axes.position.y = 120;
-        this.scene.add(this.axes);
-        this.scene.add(new THREE.GridHelper(100, 100));
 
 
         this.Other = new THREE.Mesh(this.boxGeometry, this.materials.screen2D);
@@ -177,6 +172,17 @@ class Application {
         this.world.initWorld();
         this.world.generateWorld();
         this.world.generateMeshes(this.materials.chunk);
+
+        if(DEBUG){
+            this.scene.add(new THREE.DirectionalLightHelper(this.sunLight, 5));
+            this.cameraHelper = new THREE.CameraHelper(this.sunLight.shadow.camera);
+            this.axes = new THREE.AxesHelper(100);
+            this.axes.position.y = 120;
+            this.scene.add(this.axes);
+            this.scene.add(new THREE.GridHelper(100, 100));
+            this.scene.add(this.cameraHelper);
+        }
+
 
         this.scene.add(this.world.world);
 
@@ -246,11 +252,16 @@ class Application {
             cameraFolder.add(this.camera.position, "z", -500, 500).step(1).listen();
             cameraFolder.open();
 
-            const BoxHelperFolder = this.gui.addFolder("Box Helper");
-            BoxHelperFolder.add(this.sunLight.position, "x").step(0.1).listen();
-            BoxHelperFolder.add(this.sunLight.position, "y").step(0.1).listen();
-            BoxHelperFolder.add(this.sunLight.position, "z").step(0.1).listen();
-            BoxHelperFolder.open();
+            const boxHelperFolder = this.gui.addFolder("Box Helper");
+            boxHelperFolder.add(this.sunLight.position, "x").step(0.1).listen();
+            boxHelperFolder.add(this.sunLight.position, "y").step(0.1).listen();
+            boxHelperFolder.add(this.sunLight.position, "z").step(0.1).listen();
+            //boxHelperFolder.open();
+
+            const timeFolder = this.gui.addFolder("Time");
+            timeFolder.add(this, "time").step(0.1).listen();
+            timeFolder.add(this, "timeScale", 0, 50).step(0.05);
+            timeFolder.open();
         }
         
         this.resizeViewPort();
@@ -288,20 +299,29 @@ class Application {
 
     update(deltaTime) {
         this.cameraController.Update(deltaTime);        
-
-
-        this.ground.position.set(this.camera.position.x, this.ground.position.y, this.camera.position.z);
-        let tmp = World.ToLocalCoord(this.camera.position.x, this.camera.position.y, this.camera.position.z);
-
-        this.sunLight.target.position.set(tmp.chunkX * Chunk.width + tmp.x, tmp.y, tmp.chunkZ * Chunk.depth + tmp.z);
-        //this.sunLight.target.position.set(this.camera.position.x, this.camera.position.y, this.camera.position.z);
-        this.sunLight.position.y = 800;
-        this.sunLight.position.x = this.camera.position.x +300;
-        this.sunLight.position.z = this.camera.position.z + 500;
         this.world.update(this.camera.position);
+        let dayTime = (this.time % this.dayLength) / this.dayLength;
+        let angle = 2 * Math.PI * dayTime;
+        let posX = this.camera.position.x + Math.cos(angle) * 900;
+        let posY = this.camera.position.y + Math.sin(angle) * 900;
+        let posZ = this.camera.position.x + Math.sin(angle) * Math.cos(angle) * 500;
 
+        
+        let ligthTime = ((this.time +  1 * this.dayLength/5)% this.dayLength) / this.dayLength;
+        let t = clamp(Math.abs(ligthTime-0.5)*2, .2, .8);
+        if(t == 0.2) t = 0;
+        else if (t == 0.8) t = 1;
+        this.lerpColor.r = lerp(t, this.dayColor.r, this.nightColor.r);
+        this.lerpColor.g = lerp(t, this.dayColor.g, this.nightColor.g);
+        this.lerpColor.b = lerp(t, this.dayColor.b, this.nightColor.b);
+        this.renderer.setClearColor(Color(this.lerpColor.r, this.lerpColor.g, this.lerpColor.b));
 
-
+        let tmp = World.ToLocalCoord(this.camera.position.x, this.camera.position.y, this.camera.position.z);
+        this.sunLight.target.position.set(tmp.chunkX * Chunk.width + tmp.x, tmp.y, tmp.chunkZ * Chunk.depth + tmp.z);
+        this.sunLight.position.set(posX, posY, posZ);
+        
+        this.ground.position.set(this.camera.position.x, this.ground.position.y, this.camera.position.z);
+        
         let hitPos = this.rayCast();
         if(hitPos) this.Other.position.set(hitPos.x, hitPos.y, hitPos.z);
         if (this.chunkHasChanged && hitPos) {
@@ -315,33 +335,26 @@ class Application {
             });
             this.chunkHasChanged = false;
         }
+        this.time += deltaTime * this.timeScale;
     }
 
     drawScreen() {
-                //this.ctx.fillStyle = "white";
-        //this.ctx.fillRect(0, 0, this.canvas2D.width, this.canvas2D.height);
-        //this.ctx.clearRect(0, 0, this.canvas2D.width, this.canvas2D.height);
         this.ctx.fillStyle = "white";
-
         let unit = Math.min(Math.max(1000, Math.max(this.canvas2D.width, this.canvas2D.height)), 1200);
         let wm = unit / 300;
         let w = unit / 100/* * this.camera.aspect*/;
         let hm = unit / 300;
         let h = unit / 100;
 
-        //console.log(y);
         this.ctx.fillRect(this.canvas2D.width / 2 - w / 2, this.canvas2D.height / 2 - hm / 2, w, hm);
         this.ctx.fillRect(this.canvas2D.width / 2 - wm / 2, this.canvas2D.height / 2 - h / 2, wm, h);
         this.ctx.fillStyle = "grey";
         this.ctx.fillRect(this.canvas2D.width / 2 - w / 2 + 1, this.canvas2D.height / 2 - hm / 2 + 1, w - 2, hm - 2);
         this.ctx.fillRect(this.canvas2D.width / 2 - wm / 2 + 1, this.canvas2D.height / 2 - h / 2 + 1, wm - 2, h - 2);
-        //this.ctx.fillStyle  = "red";
-        //
         this.materials.screen2DTexture.needsUpdate = true
     }
 
     draw() {
-
         this.drawScreen();
         this.renderer.render(this.scene, this.camera);
     }
@@ -349,10 +362,8 @@ class Application {
     mainLoop() {
 
         let deltaTime = this.clock.getDelta();
-        //Application.stats.begin();
         this.update(deltaTime);
         this.draw();
-        //Application.stats.end();
         if(DEBUG) this.stats.update();
         requestAnimationFrame(() => this.mainLoop());
 
