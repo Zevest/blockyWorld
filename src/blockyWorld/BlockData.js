@@ -53,15 +53,15 @@ class BlockData {
             BlockData.CROSS_LIST.push(isCross);
         }
     }
-    getUVRect(face) {
+    getUVRect(face, outOffset = 0.0005) {
         let tile = BlockInfo.getTileFromName(face);
 
         let rX = tile.id % BlockInfo.tileSetInfo.columns,
             rY = Math.floor(tile.id / BlockInfo.tileSetInfo.columns);
-        let ax = rX *  BlockInfo.unit;
-        let ay = 1 - rY *  BlockInfo.unit;
-        let bx = (rX+1) *  BlockInfo.unit;
-        let by = 1 - (rY+1) * BlockInfo.unit;
+        let ax = rX *  BlockInfo.unit + outOffset;
+        let ay = 1 - rY *  BlockInfo.unit - outOffset;
+        let bx = (rX+1) *  BlockInfo.unit - outOffset;
+        let by = 1 - (rY+1) * BlockInfo.unit + outOffset;
         let uv = [ax, by, bx, by, ax, ay, bx, ay];
         return uv;
     }
