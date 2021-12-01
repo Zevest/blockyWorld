@@ -13,6 +13,7 @@ class Chunk {
         this.isUpdating = false;
         this.transparent_geometry;
         this.opaque_geomtry;
+        this.isLoaded = false;
 
         this.transparent_BlockMeshData;
         this.opaque_BlockMeshData;
