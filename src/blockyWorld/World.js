@@ -1,6 +1,5 @@
 class World {
     static currentWorld;
-    static range = 3;
     constructor(name, seed){
         this.name = name;
         this.seed = seed;
@@ -10,17 +9,22 @@ class World {
         this.materials;
         this.chunkLoadingQueue = [];
         this.tick = 0;
+        this.range = 5;
         this.chunkPerUpdate = 1;
+        this.tickBeforeUpdate = 5;
+        let end = false;
     }
 
     initWorld() {
+        this.end = false;
         noise.seed(this.seed);
         World.currentWorld = this;
     }
 
     generateWorld(){
-        for(let i = -World.range; i <= World.range; ++i)
-            for(let j = -World.range; j <= World.range; ++j){
+   
+        for(let i = -this.range; i <= this.range; ++i)
+            for(let j = -this.range; j <= this.range; ++j){
                 this.chunkLoadingQueue.push({x:i,z:j});
                 this.chunkLoadingQueue[World.chunkID(i,j)] = true;
             }
@@ -68,7 +72,7 @@ class World {
         ];
         for(let cData of toUpdate){
             if(cData){
-                let obj = this.world.getObjectByName(cData.id);
+                let obj = cData.chunkObj;//this.world.getObjectByName(cData.id);
                 this.updateChunk(obj, cData);
             }
             
@@ -76,13 +80,14 @@ class World {
     }
     
     update(cameraPos){
+        if(this.end) return;
         ++this.tick;
-        let outrange =  Math.sqrt(Math.pow(Chunk.width * (World.range+1), 2) + Math.pow(Chunk.depth * (World.range+1), 2));
-        let inRange =  Math.sqrt(Math.pow(Chunk.width * World.range*2, 2) + Math.pow(Chunk.depth * World.range*2, 2));
+        let outrange =  Math.sqrt(Math.pow(Chunk.width * (this.range+1), 2) + Math.pow(Chunk.depth * (this.range+1), 2));
+        let inRange =  Math.sqrt(Math.pow(Chunk.width * this.range*2, 2) + Math.pow(Chunk.depth * this.range*2, 2));
         let tmp = World.ToLocalCoord(cameraPos.x, cameraPos.y, cameraPos.z);
 
-        for(let j = -World.range; j <= World.range; ++j) {
-            for(let i = -World.range; i <= World.range; ++i){
+        for(let j = -this.range; j <= this.range; ++j) {
+            for(let i = -this.range; i <= this.range; ++i){
                 let x = i + tmp.chunkX;
                 let z = j + tmp.chunkZ;
                 let d = dist(cameraPos.x, cameraPos.z, x * Chunk.width,z * Chunk.depth);
@@ -109,7 +114,7 @@ class World {
         }
 
         
-        if((this.tick % 5) == 0){
+        if((this.tick % Math.max(1, this.tickBeforeUpdate)) == 0){
             for(let i = this.chunkLoadingQueue.length-1; i >= 0; --i){
                 let c = this.chunkLoadingQueue[i];
                 let d = dist(cameraPos.x, cameraPos.z, c.x * Chunk.width , c.z * Chunk.depth);
@@ -136,12 +141,13 @@ class World {
 
         let chunk = this.chunks[World.chunkID(x, y)];
         if(!chunk) return;
-        this.chunks[World.chunkID(x, y)].isLoaded = false;
-        let chunkObj = this.world.getObjectByName(chunk.id);
-        if(!chunkObj) return;
-        ChunkMesh.deleteData(chunkObj, chunk);
-        this.world.remove(chunkObj);
-        chunkObj = null;
+        chunk.isLoaded = false;
+        //let chunkObj = this.world.getObjectByName(chunk.id);
+        //if(!chunkObj) return;
+       
+        ChunkMesh.deleteData(chunk.chunkObj, chunk);
+        this.world.remove(chunk.chunkObj);
+        chunk.chunkObj = null;
     }
 
     loadChunkMesh(x, y){
@@ -150,7 +156,7 @@ class World {
             this.addNewChunk(x,y);
             return;
         }
-        let chunkObj = this.world.getObjectByName(chunk.id);
+        let chunkObj = chunk.chunkObj;//this.world.getObjectByName(chunk.id);
         if(!chunkObj){
             chunkObj = new THREE.Object3D();
             chunkObj.position.set(x * Chunk.width, 0, y * Chunk.depth);
@@ -172,6 +178,7 @@ class World {
     }
 
     updateChunk(chunkObj, chunkData) {
+        if(this.end) return;
         ChunkMesh.deleteData(chunkObj, chunkData);
         let meshData = ChunkMesh.build(chunkData, this.materials);
         ChunkMesh.addToObject(chunkObj, meshData, chunkData);
@@ -180,13 +187,15 @@ class World {
     setBlock(blockID, x, y, z, update = true) {
         const pos = World.ToLocalCoord(x, y, z);
         const cname =World.chunkID(pos.chunkX, pos.chunkZ);
-        if(this.chunks[cname]){
-            this.chunks[cname].setBlock(blockID, pos.x, pos.y, pos.z);
-            if(!this.chunks[cname].isUpdating && update){
-                this.chunks[cname].isUpdating = true;
-                let chunkObj = this.world.getObjectByName(cname);
-                this.updateChunk(chunkObj, this.chunks[cname]);
-                this.chunks[cname].isUpdating = false;
+        let chunk = this.chunks[cname];
+        if(chunk){
+
+            chunk.setBlock(blockID, pos.x, pos.y, pos.z);
+            if(!chunk.isUpdating && update){
+                chunk.isUpdating = true;
+                let chunkObj = chunk.chunkObj;//this.world.getObjectByName(cname);
+                this.updateChunk(chunkObj, chunk);
+                chunk.isUpdating = false;
             }
         }
         
@@ -256,5 +265,15 @@ class World {
         return {chunkX, chunkZ, x: rX, y: Math.floor(y), z: rZ}
     }
 
+
+    cleanUp() {
+        this.end = true;
+        for(let id in this.chunks){
+            ChunkMesh.deleteData(this.chunks[id].chunkObj, this.chunks[id]);
+            this.chunks[id].blockData.splice(0, this.chunks[id].blockData.length);
+            delete this.chunks[id];
+        }
+        delete this.chunks;
+    }
 
 }

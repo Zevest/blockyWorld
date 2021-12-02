@@ -242,6 +242,7 @@ class ChunkMesh {
         object3D.add(chunkMesh.mesh.block.transparent);
         object3D.add(chunkMesh.mesh.cross);
         chunk.isLoaded = true;
+        chunk.chunkObj = object3D;
     }
 
     /// Supprime le mesh et sa goemetry et les retire de la scene.

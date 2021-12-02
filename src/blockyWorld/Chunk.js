@@ -18,7 +18,7 @@ class Chunk {
         this.transparent_BlockMeshData;
         this.opaque_BlockMeshData;
 
-        this.chunk_obj;
+        this.chunkObj = null;
         if(Chunk.blockCheck == undefined) {
             Chunk.blockCheck = []
             for(let i = -1; i <2; ++i){

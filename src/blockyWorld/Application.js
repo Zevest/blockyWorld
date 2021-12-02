@@ -13,6 +13,8 @@ class Application {
         this.canvas2D = document.createElement("canvas");
         this.canvas2D.id = "2D";
         this.ctx = this.canvas2D.getContext("2d");
+        this.shouldEnd = false;
+
         this.dayColor = {r:191, g:209, b:229};
         this.nightColor = {r: 10, g:10, b: 20};
         this.lerpColor = {r:0, g:0, b:0};
@@ -22,12 +24,13 @@ class Application {
         this.dayLength = 1200;
         this.time = this.dayLength / 4;
         this.timeScale = 1.0;
+       
         
         this.scene = new THREE.Scene();
-        this.rayCaster = new THREE.Raycaster();
+        
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
         this.camera.position.set(0, 150, 0);
-
+        this.rayCaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 5);
 
         this.camera.matrixAutoUpdate = false;
 
@@ -42,7 +45,8 @@ class Application {
         document.body.appendChild(this.renderer.domElement);
         document.body.style.backgroundColor = "#000000";
         window.addEventListener("resize", () => this.resizeViewPort());
-
+        window.addEventListener('beforeunload',  (e)=> this.cleanUp());
+        
         this.boxGeometry = new THREE.BoxGeometry(1, 1, 1);
         this.planeGeometry = new THREE.PlaneGeometry(1, 1);
 
@@ -155,19 +159,27 @@ class Application {
        
         
         this.scene.add(this.sunLight); 
+
+
+        this.world = new World("Hello", Math.floor(Math.random() * 65000)/*1561*/);
+        this.world.initWorld();
+        this.world.generateWorld();
+        this.world.generateMeshes(this.materials.chunk);
+
         
         this.ground = new THREE.Mesh(this.planeGeometry, this.materials.blue);
         
         this.ground.rotateX(-Math.PI / 2.0);
         this.ground.name = "Ground";
         this.ground.position.y = 100.8;
-        this.ground.scale.x = World.range * 2 * 16;
-        this.ground.scale.y = World.range * 2 * 16;
+        this.ground.scale.x = this.world.range * 2 * 16;
+        this.ground.scale.y = this.world.range * 2 * 16;
         this.ground.receiveShadow = true;
 
 
         this.Other = this.crossMesh(this.materials.BlockOutline);
         this.Other.scale.set(0.1,0.1,0.1);
+        this.Other.name = "Other";
         this.scene.add(this.Other);
 
         
@@ -175,6 +187,7 @@ class Application {
         this.BoxHelper2.scale.set(1.001, 1.001, 1.001);
         this.BoxHelper2.position.set(this.camera.position.x, this.camera.position.y, this.camera.position.z+5);
         this.BoxHelper2.renderOrder = 100;
+        this.BoxHelper2.name = "BoxHelper";
         this.scene.add(this.BoxHelper2);
 
         this.screen = new THREE.Mesh(this.planeGeometry, this.materials.screen2D);
@@ -188,10 +201,7 @@ class Application {
         this.scene.add(this.camera);
         this.screen.position.z = -.3;
 
-        this.world = new World("Hello", Math.floor(Math.random() * 65000)/*1561*/);
-        this.world.initWorld();
-        this.world.generateWorld();
-        this.world.generateMeshes(this.materials.chunk);
+       
 
         if(DEBUG){
             this.scene.add(new THREE.DirectionalLightHelper(this.sunLight, 5));
@@ -270,7 +280,7 @@ class Application {
             cameraFolder.add(this.camera.position, "x", -500, 500).step(1).listen();
             cameraFolder.add(this.camera.position, "y", 0, Chunk.height *2).step(0.1).listen();
             cameraFolder.add(this.camera.position, "z", -500, 500).step(1).listen();
-            cameraFolder.open();
+            //cameraFolder.open();
 
             const boxHelperFolder = this.gui.addFolder("Box Helper");
             boxHelperFolder.add(this.sunLight.position, "x").step(0.1).listen();
@@ -278,10 +288,15 @@ class Application {
             boxHelperFolder.add(this.sunLight.position, "z").step(0.1).listen();
             //boxHelperFolder.open();
 
+            const settingsFolder = this.gui.addFolder("Settings");
+            settingsFolder.add(this.world, "range", 0, 32).step(1);
+            settingsFolder.add(this.world, "chunkPerUpdate", 0, 32).step(1);
+            settingsFolder.add(this.world, "tickBeforeUpdate", 1, 32).step(1);
+            //settingsFolder.open();
             const timeFolder = this.gui.addFolder("Time");
             timeFolder.add(this, "time").step(0.1).listen();
             timeFolder.add(this, "timeScale", 0, 50).step(0.05);
-            timeFolder.open();
+            //timeFolder.open();
         }
         
         this.resizeViewPort();
@@ -292,7 +307,7 @@ class Application {
         this.rayCaster.setFromCamera({ x: 0, y: 0 }, this.camera);
         const chunksID = this.world.getNearbyChunk(this.camera.position.x, this.camera.position.y, this.camera.position.z);
         let chunksObjs = []
-        chunksID.forEach((id) => chunksObjs.push(this.world.world.getObjectByName(id)));
+        chunksID.forEach((id) => chunksObjs.push(this.world.chunks[id].chunkObj));
         let hitPos;
         if (chunksObjs.length > 0) {
             this.hits.splice(0, this.hits.length);
@@ -347,6 +362,7 @@ class Application {
     }
 
     update(deltaTime) {
+        if(this.shouldEnd) return;
         this.cameraController.Update(deltaTime);        
         this.world.update(this.camera.position);
         let dayTime = (this.time % this.dayLength) / this.dayLength;
@@ -375,9 +391,9 @@ class Application {
         //if(hitPos) this.Other.position.set(hitPos.x, hitPos.y, hitPos.z);
         if (this.chunkHasChanged && hitPos) {
 
-            let updatedChunkID = World.currentWorld.getNearbyChunk(hitPos.x, hitPos.y, hitPos.z, 1, false);
+            let updatedChunkID = this.world.getNearbyChunk(hitPos.x, hitPos.y, hitPos.z, 1, false);
             let chunkToUpdate = []
-            updatedChunkID.forEach((id) => chunkToUpdate.push(World.currentWorld.world.getObjectByName(id)));
+            updatedChunkID.forEach((id) => chunkToUpdate.push(this.world.chunks[id].chunkObj));
             chunkToUpdate.forEach((obj) => {
                 this.world.updateChunk(obj, this.world.chunks[obj.name]);
                 obj.needsUpdate = true;
@@ -414,7 +430,30 @@ class Application {
         this.update(deltaTime);
         this.draw();
         if(DEBUG) this.stats.update();
-        requestAnimationFrame(() => this.mainLoop());
+        if(!this.shouldEnd) requestAnimationFrame(() => this.mainLoop());
 
+    }
+
+    cleanUp() {
+        this.shouldEnd = true;
+        //alert("Do you really wanna exit ?");
+        this.world.cleanUp();
+       
+        this.materials.default.dispose();
+        this.materials.blue.dispose();
+        
+        this.materials.BlockOutlineTexture.dispose();
+        this.materials.BlockOutline.dispose();
+        this.materials.screen2DTexture.dispose();
+        this.materials.screen2D.dispose();
+
+        this.scene.remove(this.camera);
+        this.scene.remove(this.world.world);
+        
+        this.materials.chunk.texture.dispose();
+        this.materials.chunk.block.opaque.dispose();
+        this.materials.chunk.block.semi.dispose();
+        this.materials.chunk.block.transparent.dispose();
+        this.materials.chunk.cross.dispose();  
     }
 }
