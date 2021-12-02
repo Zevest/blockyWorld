@@ -1,4 +1,4 @@
-const DEBUG = false;
+const DEBUG = true;
 class Application {
     static ColPrefix() {
         return "Col_";
@@ -35,11 +35,12 @@ class Application {
         this.renderer.setClearColor(Color(191, 209, 229));
         this.renderer.shadowMap.enabled = true;
         //this.renderer.shadowMap.type = THREE.VSMShadowMap;
-        //this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
-        this.renderer.shadowMap.type = THREE.PCFShadowMap
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
+        //this.renderer.shadowMap.type = THREE.PCFShadowMap
         
 
         document.body.appendChild(this.renderer.domElement);
+        document.body.style.backgroundColor = "#000000";
         window.addEventListener("resize", () => this.resizeViewPort());
 
         this.boxGeometry = new THREE.BoxGeometry(1, 1, 1);
@@ -68,9 +69,9 @@ class Application {
     initMaterials() {
 
         // Initialisation de la texture pour le selecteur de bloc
-        this.canvas2D.width = 400;
-        this.canvas2D.height = 400;
-        this.ctx.fillStyle = Color(200, 0, 255);
+        this.canvas2D.width = 256;
+        this.canvas2D.height = 256;
+        this.ctx.fillStyle = "#1F1F1F";//Color(50, 50, 0);
         this.ctx.fillRect(0, 0, this.canvas2D.width, this.canvas2D.height);
         this.ctx.clearRect(1, 1, this.canvas2D.width - 2, this.canvas2D.height - 2);
         const blockOutlineUrl = this.canvas2D.toDataURL("image/png");
@@ -90,6 +91,7 @@ class Application {
         this.materials.BlockOutline = new THREE.MeshBasicMaterial({
             map: this.materials.BlockOutlineTexture,
             transparent: true,
+            alphaTest: 1,
         });
 
         this.materials.screen2DTexture.magFilter = THREE.NearestFilter;
@@ -99,6 +101,23 @@ class Application {
             depthTest: false,
             depthWrite: false,
         });
+    }
+
+    crossMesh(material){
+        let pos = [], index = [], uv = []
+        createBlock(BlockData.BLOCK_LIST[0], pos, index, uv, BLOCK.DIAGONAL, [0,0,0]);
+        uv.forEach( (v, index) => {uv[index] = v *BlockInfo.tileSetInfo.columns;});
+        let posFloat32Array = new Float32Array(pos);
+        let uvFloat32Array = new Float32Array(uv);
+        let geometry = new THREE.BufferGeometry();
+        geometry.setAttribute("position",
+            new THREE.BufferAttribute(posFloat32Array, 3));
+        geometry.setAttribute("uv", 
+                new THREE.BufferAttribute(uvFloat32Array, 2));
+        geometry.setIndex(index);
+        geometry.computeVertexNormals();
+        let mesh = new THREE.Mesh(geometry, material);
+        return mesh;
     }
 
     initScene() {
@@ -118,7 +137,7 @@ class Application {
         this.sunLight.position.z = 700;
         this.sunLight.shadow.mapSize.width = 2048;
         this.sunLight.shadow.mapSize.height = 2048;
-        this.sunLight.shadow.bias
+        //this.sunLight.shadow.bias = -0.0003;
         //this.sunLight.shadow.bias = -0.0005;
         //this.sunLight.shadow.camera.far = 1500;
         //this.frustum = {
@@ -147,8 +166,9 @@ class Application {
         this.ground.receiveShadow = true;
 
 
-        this.Other = new THREE.Mesh(this.boxGeometry, this.materials.screen2D);
-        this.Other.scale.set(3,3,3);
+        this.Other = this.crossMesh(this.materials.BlockOutline);
+        this.Other.scale.set(0.1,0.1,0.1);
+        this.scene.add(this.Other);
 
         
         this.BoxHelper2 = new THREE.Mesh(this.boxGeometry, this.materials.BlockOutline);
@@ -287,10 +307,39 @@ class Application {
             }
             if (this.hits.length > 0 && this.hits[0].distance < 4) {
                 hitPos = this.hits[0].point;
-                hitPos.addScaledVector(this.hits[0].face.normal, -0.5);
-                this.BoxHelper2.position.set(Math.floor(hitPos.x) + 0.5, Math.floor(hitPos.y) + 0.5, Math.floor(hitPos.z) + 0.5);
+                if( !( Math.abs(this.hits[0].face.normal.x) == 1  
+                    || Math.abs(this.hits[0].face.normal.y) == 1 
+                    || Math.abs(this.hits[0].face.normal.z) == 1 )){
+                        // CROSS geometry
+                    let id = this.world.getBlock(Math.floor(hitPos.x) + 0.5, Math.floor(hitPos.y) + 0.5, Math.floor(hitPos.z) + 0.5)
+                    if(id > 0){
+                    
+                    
+                    //console.log(blockData);
+                    
+                    this.tile = BlockInfo.getTileFromName(BlockData.BLOCK_LIST[id].face.front)
+                    const prop = BlockInfo.getPropertyObject(this.tile.properties);
+                    let sizeX = (prop.xMax - prop.xMin) /  BlockInfo.tileSetInfo.tilewidth;
+                    let sizeY = (prop.yMax - prop.yMin) / BlockInfo.tileSetInfo.tileheight;
+                    let yOffset = (1.0 - prop.yMax /  BlockInfo.tileSetInfo.tileheight)/2.0
+                    
+                    
+                    this.Other.position.set(Math.floor(hitPos.x) + 0.5, Math.floor(hitPos.y) + 0.5 - yOffset, Math.floor(hitPos.z) + 0.5);
+                    this.Other.scale.set(sizeX, sizeY, sizeX);
+                    }else{
+                        this.Other.position.set(0, -100, 0);
+                    }
+                    
+                    this.BoxHelper2.position.set(0, -100, 0);
+                }else{
+                    hitPos.addScaledVector(this.hits[0].face.normal, -0.5);
+                    this.Other.position.set(0, -100, 0);
+                    this.BoxHelper2.position.set(Math.floor(hitPos.x) + 0.5, Math.floor(hitPos.y) + 0.5, Math.floor(hitPos.z) + 0.5);
+                    
+                }
             } else {
                 this.BoxHelper2.position.set(0, -100, 0);
+                this.Other.position.set(0, -100, 0);
                 this.hits.splice(0, this.hits.length);
             }
         }
@@ -323,7 +372,7 @@ class Application {
         this.ground.position.set(this.camera.position.x, this.ground.position.y, this.camera.position.z);
         
         let hitPos = this.rayCast();
-        if(hitPos) this.Other.position.set(hitPos.x, hitPos.y, hitPos.z);
+        //if(hitPos) this.Other.position.set(hitPos.x, hitPos.y, hitPos.z);
         if (this.chunkHasChanged && hitPos) {
 
             let updatedChunkID = World.currentWorld.getNearbyChunk(hitPos.x, hitPos.y, hitPos.z, 1, false);
