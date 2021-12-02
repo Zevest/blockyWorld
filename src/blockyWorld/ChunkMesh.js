@@ -22,16 +22,15 @@ class ChunkMesh {
         materials.block.semi = new THREE.MeshStandardMaterial(
             {map:materials.texture, transparent: true});
         materials.block.transparent = new THREE.MeshStandardMaterial(
-            {map:materials.texture, transparent: true,  alphaTest: 0.2});
+            {map:materials.texture, transparent: true,  alphaTest: 1});
         materials.cross = new THREE.MeshStandardMaterial(
-            {map:materials.texture, transparent: true, alphaTest: 0.2});
+            {map:materials.texture, transparent: true, alphaTest: 1});
 
-        /// Modification du shader pou prendre en compte la position des instances des block de type croix, leur uv ainsi que leurs dimension.
+        /// Modification du shader pou prendre en compte les coordonées uv des instances des block de type croix.
         materials.cross.onBeforeCompile = (shader) => {    
             shader.vertexShader = shader.vertexShader
             .replace("#include <common>",SHADER_COMMON_REPLACE)
-            .replace("#include <uv_vertex>", SHADER_UV_VERTEX_REPLACE)
-            .replace("#include <begin_vertex>",SHADER_BEGIN_VERTEX_REPLACE);
+            .replace("#include <uv_vertex>", SHADER_UV_VERTEX_REPLACE);
         }
         return materials;
     }
@@ -157,7 +156,7 @@ class ChunkMesh {
         
 
         // Creation de la geometry pour les blocs de type croix
-        let cross_instance_position_offset = new Float32Array(cr_pos_instanced);
+        //let cross_instance_position_offset = new Float32Array(cr_pos_instanced);
         let cross_instance_uvs = new Float32Array(cr_uv_instanced);
         
         let cross_instance_dim = new Int32Array(cr_dim_instanced);
@@ -174,8 +173,8 @@ class ChunkMesh {
                 new THREE.BufferAttribute(cross_transparent_normal, 3));
         chunkMeshs.geometry.cross.setIndex(cr_index);
         
-        chunkMeshs.geometry.cross.setAttribute("instancePos", 
-                new THREE.InstancedBufferAttribute(cross_instance_position_offset, 3));
+        //chunkMeshs.geometry.cross.setAttribute("instancePos", 
+        //        new THREE.InstancedBufferAttribute(cross_instance_position_offset, 3));
         chunkMeshs.geometry.cross.setAttribute("instanceUv", 
                 new THREE.InstancedBufferAttribute(cross_instance_uvs, 2));
         chunkMeshs.geometry.cross.setAttribute("instanceDim",
@@ -189,7 +188,7 @@ class ChunkMesh {
         chunkMeshs.mesh.block.opaque.name = "opaque_block_mesh";
         chunkMeshs.mesh.block.opaque.castShadow = true;
         chunkMeshs.mesh.block.opaque.receiveShadow = true;
-        chunkMeshs.mesh.block.opaque.renderOrder = 4;        
+        //chunkMeshs.mesh.block.opaque.renderOrder = 4;        
 
 
         chunkMeshs.mesh.block.semi = new THREE.Mesh(
@@ -197,7 +196,7 @@ class ChunkMesh {
         chunkMeshs.mesh.block.semi.name = "semi_transparent_block_mesh";
         chunkMeshs.mesh.block.semi.castShadow = true;
         chunkMeshs.mesh.block.semi.receiveShadow = true;
-        chunkMeshs.mesh.block.semi.renderOrder = 1;        
+        //chunkMeshs.mesh.block.semi.renderOrder = 1;        
 
 
         chunkMeshs.mesh.block.transparent = new THREE.Mesh(
@@ -205,21 +204,30 @@ class ChunkMesh {
         chunkMeshs.mesh.block.transparent.name = "transparent_block_mesh";
         chunkMeshs.mesh.block.transparent.castShadow = true;
         chunkMeshs.mesh.block.transparent.receiveShadow = true;
-        chunkMeshs.mesh.block.transparent.renderOrder = 3;
+        //chunkMeshs.mesh.block.transparent.renderOrder = 3;
 
 
         const INSTANCE_COUNT = cr_uv_instanced.length / 2;
         chunkMeshs.mesh.cross = new THREE.InstancedMesh(
                 chunkMeshs.geometry.cross, materials.cross, INSTANCE_COUNT);
         chunkMeshs.mesh.cross.name = "transparent_cross_mesh";
-        chunkMeshs.mesh.cross.castShadow = true;
+        // chunkMeshs.mesh.cross.castShadow = true;
         chunkMeshs.mesh.cross.receiveShadow = true;
-        chunkMeshs.mesh.cross.renderOrder = 2;
+        //chunkMeshs.mesh.cross.renderOrder = 2;
         
-        // Necessaire pour que les instances soient visbles.
-        // Normalement on calcule leur position de cet façon mais je fait deja le calcule dans le Shader.
+        // On calcule la position et la taille des instances.
         const dummy = new THREE.Object3D();
         for (let i = 0; i < INSTANCE_COUNT; i++) {
+            let xMin = (cr_dim_instanced[i] >> 0) & 0xFF;
+            let xMax = (cr_dim_instanced[i] >> 8) & 0xFF;
+            let yMin = (cr_dim_instanced[i] >> 16) & 0xFF;
+            let yMax = (cr_dim_instanced[i] >> 24) & 0xFF;
+            let sizeX = (xMax - xMin) /  BlockInfo.tileSetInfo.tilewidth;
+            let sizeY = (yMax - yMin) / BlockInfo.tileSetInfo.tileheight;
+            let yOffset = (1.0 - yMax /  BlockInfo.tileSetInfo.tileheight)/2.0
+            dummy.position.set(cr_pos_instanced[i*3], cr_pos_instanced[i*3+1] - yOffset, cr_pos_instanced[i*3+2]);
+            dummy.scale.set(sizeX, sizeY, sizeX);
+            dummy.updateMatrix();
             chunkMeshs.mesh.cross.setMatrixAt(i, dummy.matrix)
         }
 

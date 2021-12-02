@@ -1,6 +1,5 @@
 const SHADER_COMMON_REPLACE = "#include <common>\n\
 #ifdef USE_INSTANCING\n\
-attribute vec3 instancePos;\n\
 attribute vec2 instanceUv;\n\
 attribute int instanceDim;\n\
 float imageWidth = 256.0;\n\
@@ -33,10 +32,3 @@ const SHADER_UV_VERTEX_REPLACE =  "#ifdef USE_UV\n\
     vUv = (uvTransform * vec3(uv, 1)).xy;\n\
 #endif\n\
 #endif\n";
-
-
-const SHADER_BEGIN_VERTEX_REPLACE = "   float sizeX = (xMax - xMin) / tileWidth;\n\
-    float sizeY = (yMax - yMin) / tileHeight;\n\
-    vec3 transformed = vec3( position.x * sizeX,\
-        position.y * sizeY - (1.0 - yMax / tileHeight)/2.0,\
-        position.z *sizeX ) + instancePos;"
