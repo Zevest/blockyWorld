@@ -6,6 +6,7 @@ class ChunkMesh {
         
         const materials = {
             texture:null,
+            customDepth: null,
             block: {
                 opaque: null,
                 semi:null,
@@ -22,10 +23,14 @@ class ChunkMesh {
         materials.block.semi = new THREE.MeshStandardMaterial(
             {map:materials.texture, transparent: true});
         materials.block.transparent = new THREE.MeshStandardMaterial(
-            {map:materials.texture, transparent: true,  alphaTest: 1});
+            {map:materials.texture, transparent: true,  alphaTest: 1, shadowSide: THREE.DoubleSide});
         materials.cross = new THREE.MeshStandardMaterial(
-            {map:materials.texture, transparent: true, alphaTest: 1});
-
+            {map:materials.texture, transparent: true, alphaTest: 1, shadowSide: THREE.FrontSide});
+        
+        materials.customDepth = new THREE.MeshDepthMaterial(
+            {depthPacking: THREE.RGBADepthPacking, map: materials.texture, // or, alphaMap: myAlphaMap
+            alphaTest: 0 });
+        
         /// Modification du shader pou prendre en compte les coordonées uv des instances des block de type croix.
         materials.cross.onBeforeCompile = (shader) => {    
             shader.vertexShader = shader.vertexShader
@@ -201,6 +206,7 @@ class ChunkMesh {
 
         chunkMeshs.mesh.block.transparent = new THREE.Mesh(
                 chunkMeshs.geometry.block.transparent, materials.block.transparent);
+        chunkMeshs.mesh.block.transparent.customDepthMaterial = materials.customDepth;
         chunkMeshs.mesh.block.transparent.name = "transparent_block_mesh";
         chunkMeshs.mesh.block.transparent.castShadow = true;
         chunkMeshs.mesh.block.transparent.receiveShadow = true;
@@ -209,9 +215,10 @@ class ChunkMesh {
 
         const INSTANCE_COUNT = cr_uv_instanced.length / 2;
         chunkMeshs.mesh.cross = new THREE.InstancedMesh(
-                chunkMeshs.geometry.cross, materials.cross, INSTANCE_COUNT);
+            chunkMeshs.geometry.cross, materials.cross, INSTANCE_COUNT);
+        chunkMeshs.mesh.cross.customDepthMaterial = materials.customDepth;
         chunkMeshs.mesh.cross.name = "transparent_cross_mesh";
-        // chunkMeshs.mesh.cross.castShadow = true;
+        chunkMeshs.mesh.cross.castShadow = true;
         chunkMeshs.mesh.cross.receiveShadow = true;
         //chunkMeshs.mesh.cross.renderOrder = 2;
         

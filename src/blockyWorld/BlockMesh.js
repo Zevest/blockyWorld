@@ -22,7 +22,7 @@ const INDEX_CROSS = [
     8, 14, 9, 14, 15, 9,
     12, 10, 13, 10, 11, 13
 ]
-
+const HALF_SQRT_2 = 0.7071067811865476;
 /// Contruit un block en ajoutant un face pour chaque cote demande
 function createBlock(blockData, verticesArray, indicesArray, uvs, faces, position = [0, 0, 0]){
     // flag contenant les faces demandees
@@ -83,18 +83,21 @@ function addFace(position, vertices, vertOffset, uvs, uvOffset, blockData, direc
         }
     }
     
+   
     // Les blocs de type croix on leur taille predefinie
     // Elle correspond au dimension (au pixel pres) de leur sprite.
+    /*
     let tmp = BlockInfo.getTileFromName(blockData.face.front);
     if(tmp.properties){
         const prop = BlockInfo.getPropertyObject(tmp.properties);
+       
         if(prop.pixelWidth){
             SIZE.x *= prop.pixelWidth / 16;
             SIZE.y *= prop.pixelHeight / 16;
             SIZE.z *= prop.pixelWidth / 16;
 
         }
-    }
+    }*/
     let pos = uvOffset;
     switch(direction){
         case BLOCK.TOP:
@@ -259,6 +262,8 @@ function addFace(position, vertices, vertOffset, uvs, uvOffset, blockData, direc
             // side = THREE.DoubleSide durant la creation du materiau
             // mais cela pose des problemes pour le calcule des ombres.
 
+            SIZE.x *= HALF_SQRT_2;
+            SIZE.z *= HALF_SQRT_2;
             // Faces avant
             // HAUT AVANT GAUCHE
             vertices[vertOffset++] = -SIZE.x + position[(vertOffset-1)%3];
