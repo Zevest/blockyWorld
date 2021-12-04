@@ -126,11 +126,16 @@ class Input {
             Input.mouseEvent.button[button] = false;
         for(const key in Input.keyBoardPress)
             Input.keyBoardPress[key] = false;
+        Input.mouseEvent.position.x = 0;
+        Input.mouseEvent.position.y = 0;
+        Input.mouseEvent.move.x = 0;
+        Input.mouseEvent.move.y = 0;
+        Input.mouseEvent.move.changed = false;
     }
 
     static onLostFocus() {
         Input.hasFocus = false;
-        
+        Input.mouseEvent.move.changed = false;
     }
 
     static disbaleShortCut() {
