@@ -297,9 +297,9 @@ class Application {
             //cameraFolder.open();
 
             const boxHelperFolder = this.gui.addFolder("Box Helper");
-            boxHelperFolder.add(this.sunLight.position, "x").step(0.1).listen();
-            boxHelperFolder.add(this.sunLight.position, "y").step(0.1).listen();
-            boxHelperFolder.add(this.sunLight.position, "z").step(0.1).listen();
+            boxHelperFolder.add(this.BoxHelper2.position, "x").step(0.1).listen();
+            boxHelperFolder.add(this.BoxHelper2.position, "y").step(0.1).listen();
+            boxHelperFolder.add(this.BoxHelper2.position, "z").step(0.1).listen();
             //boxHelperFolder.open();
 
             const settingsFolder = this.gui.addFolder("Settings");

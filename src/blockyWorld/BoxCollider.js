@@ -32,6 +32,7 @@ class BoxCollider extends Component {
         this.onCollisionBack = null;
         this.onCollision = null;
         this.onGround = false;
+        this.simulationStep = 3;
     }
 
     init(scene) {   
@@ -62,40 +63,42 @@ class BoxCollider extends Component {
 
     CollideX(){
         let collide = 0, y, z;
-        for(y = Math.floor(this.position.y); y < Math.ceil(this.position.y + this.height); ++y){
-            for(z = Math.floor(this.position.z); z < Math.ceil(this.position.z + this.depth); ++z) {
+        for(y = Math.floor(this.position.y); y < Math.ceil(this.position.y + this.height) && !collide; ++y){
+            for(z = Math.floor(this.position.z); z < Math.ceil(this.position.z + this.depth)  && !collide; ++z) {
                 let b = World.currentWorld.getBlock(this.position.x, y, z);
                 let b2 = World.currentWorld.getBlock(this.position.x+this.width, y, z);
-                if(b >= 0 && !BlockData.CROSS_LIST[b]){
-                    // Check Y Collision for 
-                    collide = 1;
-                    break;
-                }else if(b2 >= 0 &&  !BlockData.CROSS_LIST[b2]){
+                if( b == -2)
+                    collide = -2;
+                else if(b2 == -2)
+                    collide = -3;
+                else if(b >= 0 && !BlockData.CROSS_LIST[b])
+                    collide = 1; 
+                else if(b2 >= 0 &&  !BlockData.CROSS_LIST[b2])
                     collide = 2;
-                    break;
-                }
                 
-            }           
-            
-            switch(collide){
-                // Move back if necessary
-                case 1:{
-                    let offset = this.position.x - Math.ceil(this.position.x);
-                    this.position.x -=  offset;
-                    //console.log("Collide while moving toward negative x", offset);
-                    this.velocity.x = 0;
-                    if(this.onCollisionLeft) this.onCollisionLeft(this.position.x, y, z);
-                    break;
-                    }
-                case 2:{
-                    let offset = (this.position.x + this.width) - Math.floor(this.position.x + this.width);
-                    this.position.x -= offset;
-                    //console.log("Collide while moving toward positive x", offset);
-                    this.velocity.x = 0;
-                    if(this.onCollisionRight) this.onCollisionRight(this.position.x+this.width, y, z);
-                    break;
-                    }   
             }
+        }
+        switch(collide){
+            // Move back if necessary
+            case 1:
+                if(this.onCollisionLeft) this.onCollisionLeft(this.position.x, y, z);
+            case -2:
+                {
+                let offset = this.position.x - Math.ceil(this.position.x);
+                this.position.x -=  offset;
+                //console.log("Collide while moving toward negative x", offset);
+                this.velocity.x = 0;
+                break;
+                }
+            case 2:
+                if(this.onCollisionRight) this.onCollisionRight(this.position.x+this.width, y, z);
+            case -3:{
+                let offset = (this.position.x + this.width) - Math.floor(this.position.x + this.width);
+                this.position.x -= offset;
+                //console.log("Collide while moving toward positive x", offset);
+                this.velocity.x = 0;
+                break;
+                }   
         }
         return collide;
     }
@@ -103,87 +106,91 @@ class BoxCollider extends Component {
     CollideY(){
         this.onGround = false;
         let collide = 0, x, z;
-        for(x = Math.floor(this.position.x); x < Math.ceil(this.position.x + this.width); ++x){
-            for(z = Math.floor(this.position.z); z < Math.ceil(this.position.z + this.depth); ++z) {
+        for(x = Math.floor(this.position.x); x < Math.ceil(this.position.x + this.width) && !collide; ++x){
+            for(z = Math.floor(this.position.z); z < Math.ceil(this.position.z + this.depth) && !collide; ++z) {
                 let b = World.currentWorld.getBlock(x,this.position.y, z);
                 let b2 = World.currentWorld.getBlock(x,this.position.y+this.height, z);
-                if(b >= 0 && !BlockData.CROSS_LIST[b]){
-                    // Check Y Collision for 
-                    collide = 1;
-                    break;
-                }else if(b2 >= 0 &&  !BlockData.CROSS_LIST[b2]){
+                if( b == -2)
+                    collide = -2;
+                else if(b2 == -2)
+                    collide = -3;
+                else if(b >= 0 && !BlockData.CROSS_LIST[b])
+                    collide = 1; 
+                else if(b2 >= 0 &&  !BlockData.CROSS_LIST[b2])
                     collide = 2;
-                    break;
-                }
                 
             }           
-            
-            switch(collide){
-                // Move back if necessary
-                case 1:{
-                    let offset = this.position.y - Math.ceil(this.position.y);
-                    this.position.y -=  offset;
-                    //console.log("Collide while moving toward negative y", offset);
-                    this.velocity.y = 0;
-                    this.onGround = true;
-                    if(this.onCollisionDown) this.onCollisionDown(x,this.position.y, z);
-                    break;
-                    }
-                case 2:{
-                    let offset = (this.position.y + this.height) - Math.floor(this.position.y + this.height);
-                    this.position.y -= offset;
-                    //console.log("Collide while moving toward positive y", offset);
-                    this.velocity.y = 0;
-                    if(this.onCollisionUp) this.onCollisionUp(x,this.position.y+this.height, z);
-                    break;
-                    }   
-            }
+
+        }
+        switch(collide){
+            // Move back if necessary
+            case 1:
+                if(this.onCollisionDown) this.onCollisionDown(x,this.position.y, z);
+                this.onGround = true;
+            case -2:{
+                let offset = this.position.y - Math.ceil(this.position.y);
+                this.position.y -=  offset;
+                //console.log("Collide while moving toward negative y", offset);
+                this.velocity.y = 0;
+                break;
+                }
+            case 2:
+                if(this.onCollisionUp) this.onCollisionUp(x,this.position.y+this.height, z);
+            case -3:{
+                let offset = (this.position.y + this.height) - Math.floor(this.position.y + this.height);
+                this.position.y -= offset;
+                //console.log("Collide while moving toward positive y", offset, this.position.y, Math.floor(this.position.y + this.height));
+                this.velocity.y = 0;
+                break;
+                }   
         }
         return collide;
     }
 
     CollideZ(){
         let collide = 0, y, x;
-        for(y = Math.floor(this.position.y); y < Math.ceil(this.position.y + this.height); ++y){
-            for(x = Math.floor(this.position.x); x < Math.ceil(this.position.x + this.width); ++x) {
+        for(y = Math.floor(this.position.y); y < Math.ceil(this.position.y + this.height)  && !collide; ++y){
+            for(x = Math.floor(this.position.x); x < Math.ceil(this.position.x + this.width)  && !collide; ++x) {
                 let b = World.currentWorld.getBlock(x, y, this.position.z);
                 let b2 = World.currentWorld.getBlock(x, y, this.position.z + this.depth);
-                if(b >= 0 && !BlockData.CROSS_LIST[b]){
-                    // Check Y Collision for 
-                    collide = 1;
-                    break;
-                }else if(b2 >= 0 &&  !BlockData.CROSS_LIST[b2]){
+                // Check Z Collision for 
+                if( b == -2)
+                    collide = -2;
+                else if(b2 == -2)
+                    collide = -3;
+                else if(b >= 0 && !BlockData.CROSS_LIST[b])
+                    collide = 1; 
+                else if(b2 >= 0 &&  !BlockData.CROSS_LIST[b2])
                     collide = 2;
-                    break;
-                }
-                
             }           
-            
-            switch(collide){
-                // Move back if necessary
-                case 1:{
-                    let offset = this.position.z - Math.ceil(this.position.z);
-                    this.position.z -=  offset;
-                    //console.log("Collide while moving toward negative z", offset);
-                    this.velocity.z = 0;
-                    if(this.onCollisionBack) this.onCollisionBack(x, y, this.position.z);
-                    break;
-                    }
-                case 2:{
-                    let offset = (this.position.z + this.depth) - Math.floor(this.position.z + this.depth);
-                    this.position.z -= offset;
-                    //console.log("Collide while moving toward positive z", offset);
-                    this.velocity.z = 0;
-                    if(this.onCollisionFront) this.onCollisionFront(x, y, this.position.z + this.depth);
-                    break;
-                }   
-            }
+        }
+        switch(collide){
+            // Move back if necessary
+            case 1:
+                if(this.onCollisionBack) this.onCollisionBack(x, y, this.position.z);
+            case -2:{
+                let offset = this.position.z - Math.ceil(this.position.z);
+                this.position.z -=  offset;
+                //console.log("Collide while moving toward negative z", offset);
+                this.velocity.z = 0;
+                break;
+                }
+            case 2:
+                if(this.onCollisionFront) this.onCollisionFront(x, y, this.position.z + this.depth);
+            case -3:{
+                let offset = (this.position.z + this.depth) - Math.floor(this.position.z + this.depth);
+                this.position.z -= offset;
+                //console.log("Collide while moving toward positive z", offset);
+                this.velocity.z = 0;
+                break;
+            }   
         }
         return collide;
     }
 
 
     Update(deltaTime) {
+        
         if(this.autoSize){
             this.width = this.object3D.scale.x;
             this.height = this.object3D.scale.y;
@@ -192,21 +199,29 @@ class BoxCollider extends Component {
 
         this.velocity.addScaledVector(this.acceleration, deltaTime);
         this.acceleration.set(0, 0, 0);
+
+        let MaxSpeed = (1/ deltaTime) * Math.min(this.width, this.height, this.depth) * this.simulationStep - 10;
+        if(this.velocity.length() > MaxSpeed){
+            this.velocity.normalize();
+            this.velocity.multiplyScalar(MaxSpeed);
+        }
+        
         let collide = 0;
-        if(this.velocity.y != 0){
-            this.position.y += this.velocity.y * deltaTime;
-            collide += this.CollideY();
-            
-        }
-        if(this.velocity.x != 0){
-            this.position.x += this.velocity.x * deltaTime;
-            collide += this.CollideX();
-            this.velocity.x *= this.friction;
-        }
-        if(this.velocity.z != 0){
-            this.position.z += this.velocity.z * deltaTime;
-            collide += this.CollideZ();
-            this.velocity.z *= this.friction;
+        for(let i = 0, collide = 0; i < this.simulationStep&& !collide; ++i){
+            if(this.velocity.y != 0){
+                this.position.y += (this.velocity.y/this.simulationStep) * deltaTime;
+                collide += this.CollideY();
+            }
+            if(this.velocity.x != 0){
+                this.position.x += (this.velocity.x/this.simulationStep) * deltaTime;
+                collide += this.CollideX();
+                this.velocity.x *= this.friction;
+            }
+            if(this.velocity.z != 0){
+                this.position.z += (this.velocity.z/this.simulationStep) * deltaTime;
+                collide += this.CollideZ();
+                this.velocity.z *= this.friction;
+            }
         }
         if(collide && this.onCollision) this.onCollision();
         /* this.position.y += this.velocity.y * deltaTime;
@@ -268,8 +283,8 @@ class BoxCollider extends Component {
         // Move back if necessary
         
         
-        this.box.min.copy(this.position);
-        this.box.max.set(this.width + this.box.min.x, this.height +  this.box.min.y, this.depth +  this.box.min.z);
+        this.box.min.set(this.position.x, this.position.y, this.position.z);
+        this.box.max.set(this.width + this.box.min.x, this.position.y + this.height, this.depth +  this.box.min.z);
         
     }
 

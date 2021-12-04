@@ -174,7 +174,7 @@ class World {
         const pos = World.ToLocalCoord(x, y, z);
         const chunk = this.chunks[World.chunkID(pos.chunkX, pos.chunkZ)];
         if(chunk) return chunk.getBlock(pos.x, pos.y, pos.z);
-        return -1;
+        return -2;
     }
 
     updateChunk(chunkObj, chunkData) {
