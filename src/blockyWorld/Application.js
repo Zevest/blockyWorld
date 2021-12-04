@@ -8,12 +8,14 @@ class Application {
 
     constructor() {
         // setting up container
+
         this.canvas = window.document.createElement("canvas");
         this.canvas.id = "container";
         this.canvas2D = document.createElement("canvas");
         this.canvas2D.id = "2D";
         this.ctx = this.canvas2D.getContext("2d");
         this.shouldEnd = false;
+        this.lightDist = 5000;
 
         this.dayColor = {r:191, g:209, b:229};
         this.nightColor = {r: 10, g:10, b: 20};
@@ -37,6 +39,7 @@ class Application {
         this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true });
         this.renderer.setClearColor(Color(191, 209, 229));
         this.renderer.shadowMap.enabled = true;
+        //this.renderer.shadowMapCullFace = THREE.CullFaceNone;
         //this.renderer.shadowMap.type = THREE.VSMShadowMap;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
         //this.renderer.shadowMap.type = THREE.PCFShadowMap
@@ -139,18 +142,18 @@ class Application {
         this.sunLight.position.x = 900;
         this.sunLight.position.y = 500;
         this.sunLight.position.z = 700;
-        this.sunLight.shadow.mapSize.width = 2048;
-        this.sunLight.shadow.mapSize.height = 2048;
-        //this.sunLight.shadow.bias = -0.0003;
+        this.sunLight.shadow.mapSize.width = 4096;
+        this.sunLight.shadow.mapSize.height = 4096;
+        //this.sunLight.shadow.bias = 0.0001;
         //this.sunLight.shadow.bias = -0.0005;
         //this.sunLight.shadow.camera.far = 1500;
         //this.frustum = {
-        this.sunLight.shadow.camera.near = -1000,
-        this.sunLight.shadow.camera.far = 1500,
+        this.sunLight.shadow.camera.near = this.lightDist-700,
+        this.sunLight.shadow.camera.far = this.lightDist + 300,
         this.sunLight.shadow.camera.top = 20,
-        this.sunLight.shadow.camera.bottom = -40,
-        this.sunLight.shadow.camera.left = -40,
-        this.sunLight.shadow.camera.right = 40
+        this.sunLight.shadow.camera.bottom = -80,
+        this.sunLight.shadow.camera.left = -60,
+        this.sunLight.shadow.camera.right = 60
         //};
 
 
@@ -177,7 +180,7 @@ class Application {
         this.ground.receiveShadow = true;
 
 
-        this.Other = this.crossMesh(this.materials.BlockOutline);
+        this.Other = new THREE.Mesh(this.boxGeometry, this.materials.BlockOutline);//this.crossMesh(this.materials.BlockOutline);
         this.Other.scale.set(0.1,0.1,0.1);
         this.Other.name = "Other";
         this.scene.add(this.Other);
@@ -189,6 +192,17 @@ class Application {
         this.BoxHelper2.renderOrder = 100;
         this.BoxHelper2.name = "BoxHelper";
         this.scene.add(this.BoxHelper2);
+
+        this.Box = new THREE.Object3D()//new THREE.Mesh(this.boxGeometry, this.materials.default);
+        this.Box.name = "ColliderTest";
+        this.Box.position.copy(this.camera.position);
+        this.scene.add(this.Box);
+        let collider = addComponent(this.Box, BoxCollider, 0.6, 1.8, 0.6);
+        
+        //this.scene.add(collider.box);
+        collider.init(this.scene);
+        
+        
 
         this.screen = new THREE.Mesh(this.planeGeometry, this.materials.screen2D);
 
@@ -334,7 +348,7 @@ class Application {
                     
                     this.tile = BlockInfo.getTileFromName(BlockData.BLOCK_LIST[id].face.front)
                     const prop = BlockInfo.getPropertyObject(this.tile.properties);
-                    let sizeX = (prop.xMax - prop.xMin) /  BlockInfo.tileSetInfo.tilewidth;
+                    let sizeX = (prop.xMax - prop.xMin) /  BlockInfo.tileSetInfo.tilewidth * HALF_SQRT_2;
                     let sizeY = (prop.yMax - prop.yMin) / BlockInfo.tileSetInfo.tileheight;
                     let yOffset = (1.0 - prop.yMax /  BlockInfo.tileSetInfo.tileheight)/2.0
                     
@@ -362,15 +376,18 @@ class Application {
     }
 
     update(deltaTime) {
+        const collider = getComponent(this.Box, BoxCollider);
+        collider.applyForce(0, -9.81, 0);
+        collider.Update(deltaTime);
+        //console.log(collider);
         if(this.shouldEnd) return;
         this.cameraController.Update(deltaTime);        
         this.world.update(this.camera.position);
         let dayTime = (this.time % this.dayLength) / this.dayLength;
         let angle = 2 * Math.PI * dayTime;
-        let posX = this.camera.position.x + Math.cos(angle) * 900;
-        let posY = this.camera.position.y + Math.sin(angle) * 900;
-        let posZ = this.camera.position.x + Math.sin(angle) * Math.cos(angle) * 500;
-
+        let posX = this.camera.position.x + Math.cos(angle) * this.lightDist;
+        let posY = this.camera.position.y + Math.sin(angle) * this.lightDist;
+        let posZ = this.camera.position.z + Math.cos(angle) * (this.lightDist / 10.0);
         
         let ligthTime = ((this.time +  1 * this.dayLength/5)% this.dayLength) / this.dayLength;
         let t = clamp(Math.abs(ligthTime-0.5)*2, .2, .8);
@@ -427,7 +444,7 @@ class Application {
     mainLoop() {
 
         let deltaTime = this.clock.getDelta();
-        this.update(deltaTime);
+        this.update(deltaTime * this.timeScale);
         this.draw();
         if(DEBUG) this.stats.update();
         if(!this.shouldEnd) requestAnimationFrame(() => this.mainLoop());
