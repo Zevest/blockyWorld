@@ -1,4 +1,4 @@
-const DEBUG = true;
+const DEBUG = false;
 class Application {
     static ColPrefix() {
         return "Col_";
@@ -193,14 +193,17 @@ class Application {
         this.BoxHelper2.name = "BoxHelper";
         this.scene.add(this.BoxHelper2);
 
-        this.Box = new THREE.Object3D()//new THREE.Mesh(this.boxGeometry, this.materials.default);
-        this.Box.name = "ColliderTest";
-        this.Box.position.copy(this.camera.position);
-        this.scene.add(this.Box);
-        let collider = addComponent(this.Box, BoxCollider, 0.6, 1.8, 0.6);
+        //this.Box = new THREE.Mesh(this.boxGeometry, this.materials.default);
         
+        //this.Box.name = "ColliderTest";
+        //this.Box.position.copy(this.camera.position);
+        //this.scene.add(this.Box);
+        //let collider = addComponent(this.Box, BoxCollider, 0.6, 1.8, 0.6);
+        //this.BoxEntity = new Player(this.Box);//Entity.NewEntity(this.Box);
+        //this.BoxEntity.addComponent(BoxCollider);
+
         //this.scene.add(collider.box);
-        collider.init(this.scene);
+        
         
         
 
@@ -272,12 +275,16 @@ class Application {
                 }
             }
         }
-        this.cameraController = addComponent(this.camera, CameraController);
-
+        this.entity = new Player(this.camera);
+        console.log(this.entity);
+        //this.entity.addComponent(CameraController);
+        //console.log(this.entity);
+        //this.cameraController = addComponent(this.camera, CameraController);
+        
         BlockInfo.initData("../../res/json/block.json", "../../res/json/MinecraftTiles.json",
             "../../res/shader/block_cross_vert.glsl", "../../res/shader/block_cross_frag.glsl",
             () => this.setup());
-
+        
     }
 
     setup() {
@@ -312,8 +319,9 @@ class Application {
             timeFolder.add(this, "timeScale", 0, 50).step(0.05);
             //timeFolder.open();
         }
-        
+    
         this.resizeViewPort();
+        Entity.Start();
         this.mainLoop();
     }
 
@@ -376,12 +384,9 @@ class Application {
     }
 
     update(deltaTime) {
-        const collider = getComponent(this.Box, BoxCollider);
-        collider.applyForce(0, -9.81, 0);
-        collider.Update(deltaTime);
+        Entity.Update(deltaTime);
         //console.log(collider);
         if(this.shouldEnd) return;
-        this.cameraController.Update(deltaTime);        
         this.world.update(this.camera.position);
         let dayTime = (this.time % this.dayLength) / this.dayLength;
         let angle = 2 * Math.PI * dayTime;

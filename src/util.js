@@ -73,6 +73,6 @@ function getClassName(Class) {
     return className;
 }
 
-function lerp(v, a,b) {
+function lerp(v, a, b) {
     return a + (b - a) * v;
 }

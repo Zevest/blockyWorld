@@ -1,9 +1,9 @@
 class Component {
     constructor(object3D) {
-        this.object3D = object3D;
-        this.Start();
+        this.parent = object3D;
+        //this.Start();
     }
-
+/*
     addComponent(Class, ...args) {
         let className;
         if(typeof Class == 'string') className = Class;
@@ -61,12 +61,13 @@ class Component {
         this.object3D.userData[className].splice(0, this.object3D.userData[className].length);
         this.object3D.userData[className] = undefined;
     }
-
+    */
     Start() { }
 
     Update(deltaTime) { }
+    
 }
-
+/*
 function addComponent(object3d, Class, ...args) {
     let className;
         if(typeof Class == 'string') className = Class;
@@ -124,4 +125,4 @@ function removeComponents(object3d, Class) {
     if(object3d.userData[className] == undefined) return undefined;
     object3d.userData[className].splice(0, object3d.userData[className].length);
     object3d.userData[className] = undefined;
-}
+}*/

@@ -8,26 +8,29 @@ class CameraController extends Component{
     static maxAngleY = Math.PI/2.0;
     constructor(object3D) {
         super(object3D)
+    }
+
+    Start(){
         this.moveSpeed = 3;
         this.rotationSpeed = 1;
         this.forward = new THREE.Vector3();
         this.right = new THREE.Vector3();
         this.tmpeuler = new THREE.Euler( 0, 0, 0, 'YXZ' );
-        this.object3D.updateMatrix();
+        this.parent.updateMatrix();
         this.lastPos = new THREE.Vector3();
         this.sensibility = 0.005;
-        this.lastPos.copy(this.object3D.position);
+        this.lastPos.copy(this.parent.position);
         this.zoom = 2;
     }
-
+    
     setPosition(v, y, z) {
         switch(arguments.length) {
             case 1:
-                this.object3D.position.set(v.x, v.y, v.z);
+                this.parent.position.set(v.x, v.y, v.z);
                 break;
             default:
             case 3:
-                this.object3D.position.set(v, y, z);
+                this.parent.position.set(v, y, z);
                 break;
         }
     }
@@ -38,36 +41,36 @@ class CameraController extends Component{
     setRotationSpeed(speed) { this.rotationSpeed = speed }
 
     Update(deltaTime) {
-        this.up = this.object3D.up;
-        this.object3D.getWorldDirection(this.forward);
+        this.up = this.parent.up;
+        this.parent.getWorldDirection(this.forward);
         this.right.crossVectors(this.up, this.forward);
         this.right.normalize();
         const mult = (Input.getKey("Shift") ? 3 : 1);
         if(Input.getKey('z')) {
-            this.object3D.position.addScaledVector(this.forward, mult * this.moveSpeed * deltaTime);
+            this.parent.position.addScaledVector(this.forward, mult * this.moveSpeed * deltaTime);
         }
         if(Input.getKey('s')) {
-            this.object3D.position.addScaledVector(this.forward,  mult * -this.moveSpeed * deltaTime);
+            this.parent.position.addScaledVector(this.forward,  mult * -this.moveSpeed * deltaTime);
         }
         if(Input.getKey('q')) {
-            this.object3D.position.addScaledVector(this.right,  mult * this.moveSpeed * deltaTime);
+            this.parent.position.addScaledVector(this.right,  mult * this.moveSpeed * deltaTime);
         }
         if(Input.getKey('d')) {
-            this.object3D.position.addScaledVector(this.right,  mult * -this.moveSpeed * deltaTime);
+            this.parent.position.addScaledVector(this.right,  mult * -this.moveSpeed * deltaTime);
         }
         if(Input.getKey(' ')) {
-            this.object3D.position.addScaledVector(this.up,  mult * this.moveSpeed * deltaTime);
+            this.parent.position.addScaledVector(this.up,  mult * this.moveSpeed * deltaTime);
         }
         if(Input.getKey("Control")) {
-            this.object3D.position.addScaledVector(this.up,  mult * -this.moveSpeed * deltaTime);
+            this.parent.position.addScaledVector(this.up,  mult * -this.moveSpeed * deltaTime);
         }
         let rotX = 0, rotY = 0, rotZ = 0, move = Input.getMouseMovement();
         if(move.changed) {
             rotX = this.rotationSpeed * move.x * this.sensibility;
             rotY = this.rotationSpeed * move.y * this.sensibility;
         }
-        this.object3D.zoom = 1 + Input.getKey('x') * this.zoom;
-        this.object3D.updateProjectionMatrix();
+        this.parent.zoom = 1 + Input.getKey('x') * this.zoom;
+        this.parent.updateProjectionMatrix();
         if(Input.getKey("ArrowLeft")) {
             rotX -= this.rotationSpeed;
         }
@@ -86,14 +89,14 @@ class CameraController extends Component{
         if(Input.getKey("e")) {
             rotZ += this.rotationSpeed * this.sensibility;
         }
-        if(rotX != 0 || rotY != 0 || rotZ != 0 || !this.object3D.position.equals(this.lastPos)){
-            this.tmpeuler.setFromQuaternion(this.object3D.quaternion);
+        if(rotX != 0 || rotY != 0 || rotZ != 0 || !this.parent.position.equals(this.lastPos)){
+            this.tmpeuler.setFromQuaternion(this.parent.quaternion);
             this.tmpeuler.y -= rotX /* deltaTime*/;
             this.tmpeuler.x = clamp(this.tmpeuler.x - (rotY /* deltaTime*/), CameraController.minAngleY, CameraController.maxAngleY);
             this.tmpeuler.z -= rotZ /* deltaTime*/;
-            this.object3D.quaternion.setFromEuler(this.tmpeuler);
-            this.object3D.updateMatrix();
+            this.parent.quaternion.setFromEuler(this.tmpeuler);
+            this.parent.updateMatrix();
         }
-        this.lastPos.copy(this.object3D.position);
+        this.lastPos.copy(this.parent.position);
     }
 }
