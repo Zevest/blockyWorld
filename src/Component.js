@@ -112,7 +112,7 @@ function removeComponent(object3d, Class, index = 0) {
 
     if(object3d.userData[className] == undefined) return undefined;
     object3d.userData[className].splice(index, 0);
-    if(oobject3d.userData[className].lenght = 0)
+    if(object3d.userData[className].lenght = 0)
         object3d.userData[className] = undefined;
 }
 
