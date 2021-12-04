@@ -17,6 +17,7 @@ class CameraController extends Component{
         this.lastPos = new THREE.Vector3();
         this.sensibility = 0.005;
         this.lastPos.copy(this.object3D.position);
+        this.zoom = 2;
     }
 
     setPosition(v, y, z) {
@@ -62,10 +63,10 @@ class CameraController extends Component{
         }
         let rotX = 0, rotY = 0, rotZ = 0, move = Input.getMouseMovement();
         if(move.changed) {
-            rotX += this.rotationSpeed * move.x * this.sensibility;
-            rotY += this.rotationSpeed * move.y * this.sensibility;
+            rotX = this.rotationSpeed * move.x * this.sensibility;
+            rotY = this.rotationSpeed * move.y * this.sensibility;
         }
-        this.object3D.zoom = 1 + Input.getKey('x');
+        this.object3D.zoom = 1 + Input.getKey('x') * this.zoom;
         this.object3D.updateProjectionMatrix();
         if(Input.getKey("ArrowLeft")) {
             rotX -= this.rotationSpeed;
