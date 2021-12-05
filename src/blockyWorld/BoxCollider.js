@@ -22,22 +22,23 @@ class BoxCollider extends Component {
         this.onBackCollision = null;
         this.onSideCollision = null;
         this.onCollision = null;
-    }
-    Start() {
-        this.position = new THREE.Vector3(this.parent.position.x, this.parent.position.y, this.parent.position.z);
-        this.posOffset = new THREE.Vector3(0.5, 0.5, 0.5);
+
+        this.position = new THREE.Vector3();
+        this.posOffset = new THREE.Vector3();
         this.velocity = new THREE.Vector3();
         this.acceleration = new THREE.Vector3();
-        
-        this.box = new THREE.Box3(this.position, new THREE.Vector3(this.width, this.height, this.depth));
-
+                
+        this.box = new THREE.Box3();
         this.friction = 0.8;
         this.airFriction = 0.999;
-
-
         this.onGround = false;
         this.simulationStep = 3;
-        console.log("Start");
+    }
+    Start() {
+        this.position.set(this.parent.position.x, this.parent.position.y, this.parent.position.z);
+        this.posOffset.set(0.5, 0.5, 0.5);
+        this.box.min.set(this.position)
+        this.box.max.set(this.width, this.height, this.depth);
     }
 
     setOffset(offset){
@@ -203,23 +204,9 @@ class BoxCollider extends Component {
     }
 
 
-    Update(deltaTime) {
-        if(this.autoSize){
-            this.width = this.parent.scale.x;
-            this.height = this.parent.scale.y;
-            this.depth = this.parent.scale.z;
-        }
-
-        this.velocity.addScaledVector(this.acceleration, deltaTime);
-        this.acceleration.set(0, 0, 0);
-
-        let MaxSpeed = (1/ deltaTime) * Math.min(this.width, this.height, this.depth) * this.simulationStep - 10;
-        if(this.velocity.length() > MaxSpeed){
-            this.velocity.normalize();
-            this.velocity.multiplyScalar(MaxSpeed);
-        }
-        
+    MoveAndCollideYXZ(deltaTime){
         let collide = 0;
+        
         for(let i = 0, collide = 0; i < this.simulationStep&& !collide; ++i){
             if(this.velocity.y != 0){
                 this.position.y += (this.velocity.y/this.simulationStep) * deltaTime;
@@ -229,15 +216,69 @@ class BoxCollider extends Component {
         for(let i = 0, col = 0; i < this.simulationStep&& !col; ++i){
             if(this.velocity.x != 0){
                 this.position.x += (this.velocity.x/this.simulationStep) * deltaTime;
-                collide += this.CollideX();
-                
+                col += this.CollideX();
+                collide += col;
             }
+        }
+        for(let i = 0, col = 0; i < this.simulationStep&& !col; ++i){
             if(this.velocity.z != 0){
                 this.position.z += (this.velocity.z/this.simulationStep) * deltaTime;
-                collide += this.CollideZ();
+                col += this.CollideZ();
+                collide  += col;
                 
             }
         }
+        return collide;
+    }
+
+    MoveAndCollideYZX(deltaTime){
+        let collide = 0;
+        
+        for(let i = 0, collide = 0; i < this.simulationStep&& !collide; ++i){
+            if(this.velocity.y != 0){
+                this.position.y += (this.velocity.y/this.simulationStep) * deltaTime;
+                collide += this.CollideY();
+            }
+        }
+        for(let i = 0, col = 0; i < this.simulationStep&& !col; ++i){
+            if(this.velocity.z != 0){
+                this.position.z += (this.velocity.z/this.simulationStep) * deltaTime;
+                col += this.CollideZ();
+                collide  += col;
+                
+            }
+        }
+        for(let i = 0, col = 0; i < this.simulationStep&& !col; ++i){
+            if(this.velocity.x != 0){
+                this.position.x += (this.velocity.x/this.simulationStep) * deltaTime;
+                col += this.CollideX();
+                collide += col;
+            }
+        }
+
+        return collide;
+    }
+
+    Update(deltaTime) {
+        if(this.autoSize){
+            this.width = this.parent.scale.x;
+            this.height = this.parent.scale.y;
+            this.depth = this.parent.scale.z;
+        }
+        this.velocity.addScaledVector(this.acceleration, deltaTime);
+        this.acceleration.set(0, 0, 0);
+
+        let MaxSpeed = (1/ deltaTime) * Math.min(this.width, this.height, this.depth) * this.simulationStep - 10;
+        if(this.velocity.length() > MaxSpeed){
+            this.velocity.normalize();
+            this.velocity.multiplyScalar(MaxSpeed);
+        }
+        let collide;
+        if(Math.abs(this.velocity.x) > Math.abs(this.velocity.z))
+            collide = this.MoveAndCollideYXZ(deltaTime);
+        else
+            collide = this.MoveAndCollideYZX(deltaTime);
+       
         if(this.onGround){
             //this.velocity.x *= this.friction;
             //this.velocity.z *= this.friction;

@@ -6,26 +6,31 @@ class Player extends Entity{
     static Forward = new THREE.Vector3(0, 0, 1);
 
     static maxPixelDist = 10;
-    static minAngleY = -Math.PI/2.0;
-    static maxAngleY = Math.PI/2.0;
+    static minAngleY = -Math.PI/2.0 + 0.001;
+    static maxAngleY = Math.PI/2.0 - 0.001;
 
     constructor(objec3D){
         super(objec3D);
         this.addComponent(BoxCollider, 0.6, 1.8, 0.6);
     }
-
+     // TODO: fixe collision in x -63 z -63
     Start(){
         this.walkSpeed = 4.317;
         this.sprintSpeed = 5.612;
         this.sneakSpeed = 1.295;
-        this.flyingSpeed = 10.89;
-        this.flyingSprintSpeed = 21.78;
+        this.flyingSpeed = 6.924//10.89;
+        this.flyingSprintSpeed = 10.89//21.78;
         this.rotationSpeed = 1;
+        this.jumpHeight = 8.5;
+        this.jumpStrength = 1.0;
+
         this.forward = new THREE.Vector3();
         this.right = new THREE.Vector3();
         this.movement = new THREE.Vector3();
         this.tmpeuler = new THREE.Euler( 0, 0, 0, 'YXZ' );
-        this.sensibility = 0.005;
+
+        this.sensitivity = 0.02;
+        this.mouseSensitivity = 0.005;
         this.cameraPosition = new THREE.Vector3(0.3, 1.6, 0.3);
         this.zoom = 2;
         this.isRunning = false;
@@ -37,7 +42,7 @@ class Player extends Entity{
         this.lastTimePressingZ = 0;
         this.collider = this.getComponent(BoxCollider);
         this.FunctionToggletime = 0.25;
-
+        
         Input.onKeyUp = (key) => {
             if(key == ' '){
                 if(app.time - this.lastTimePressingSpace < this.FunctionToggletime)
@@ -55,18 +60,14 @@ class Player extends Entity{
 
     Update(deltaTime){
         this.RotateCamera();
-        this.CalculateMovement()
+        this.CalculateMovement();
         if(!this.isFlying)
              this.collider.applyForce(0, -28, 0);
         //let fall =  this.collider.velocity.y;
-         this.collider.setLinearVelocityV(this.movement);
-         this.collider.setOffset(this.cameraPosition);
-        
-        if(this.isRunning &&  this.zoomAnim > -0.3)
-        this.zoomAnim = lerp(0.1, this.zoomAnim, -0.3);
-        else if(this.zoomAnim < 0){
-            this.zoomAnim = lerp(0.1, this.zoomAnim, 0);
-        }
+        this.collider.setLinearVelocityV(this.movement);
+        this.collider.setOffset(this.cameraPosition);
+        this.calculateAnimation(deltaTime * 10);
+
         this.transform.zoom = 1 + Input.getKey('x') * this.zoom + this.zoomAnim;
         this.transform.updateProjectionMatrix();
         this.transform.updateMatrix();
@@ -75,32 +76,44 @@ class Player extends Entity{
         }
     }
 
+    calculateAnimation(deltaTime){
+        if(this.isRunning &&  this.zoomAnim > -0.3)
+        this.zoomAnim = lerp(deltaTime, this.zoomAnim, -0.3);
+        else if(this.zoomAnim < 0)
+            this.zoomAnim = lerp(deltaTime, this.zoomAnim, 0);
+        
+        if(Input.getKey("Shift"))
+            this.sneakAnim = lerp(deltaTime, this.sneakAnim, 1.4);
+        else
+            this.sneakAnim = lerp(deltaTime, this.sneakAnim, 1.6);
+    }
+
     RotateCamera(){
         let rotX = 0, rotY = 0, rotZ = 0, move = Input.getMouseMovement();
         if(move.changed) {
-            rotX = this.rotationSpeed * move.x * this.sensibility;
-            rotY = this.rotationSpeed * move.y * this.sensibility;
+            rotX = this.rotationSpeed * move.x * this.mouseSensitivity;
+            rotY = this.rotationSpeed * move.y * this.mouseSensitivity;
         }
         //console.log(this.transform);
         //this.transform.zoom = 1 + Input.getKey('x') * this.zoom;
         //this.transform.updateProjectionMatrix();
         if(Input.getKey("ArrowLeft")) {
-            rotX -= this.rotationSpeed;
+            rotX -= this.rotationSpeed * this.sensitivity;
         }
         if(Input.getKey("ArrowRight")) {
-            rotX += this.rotationSpeed;
+            rotX += this.rotationSpeed * this.sensitivity;
         }
         if(Input.getKey("ArrowUp")) {
-            rotY -= this.rotationSpeed;
+            rotY -= this.rotationSpeed * this.sensitivity;
         }
         if(Input.getKey("ArrowDown")) {
-            rotY += this.rotationSpeed;
+            rotY += this.rotationSpeed * this.sensitivity;
         }
         if(Input.getKey("a")) {
-            rotZ -= this.rotationSpeed * this.sensibility;
+            rotZ -= this.rotationSpeed * this.sensitivity;
         }
         if(Input.getKey("e")) {
-            rotZ += this.rotationSpeed * this.sensibility;
+            rotZ += this.rotationSpeed * this.sensitivity;
         }
         if(rotX != 0 || rotY != 0 || rotZ != 0 ){
             this.tmpeuler.setFromQuaternion(this.transform.quaternion);
@@ -147,11 +160,9 @@ class Player extends Entity{
             this.isRunning = false;
 
         if(Input.getKey("Shift")) {
-            this.sneakAnim = lerp(0.1, this.sneakAnim, 1.4);
             this.isSneaking = true;
             this.isRunning = false;
         }else{
-            this.sneakAnim = lerp(0.1, this.sneakAnim, 1.6);
             this.isSneaking = false;
         }
         this.cameraPosition.y = this.sneakAnim;
@@ -171,10 +182,12 @@ class Player extends Entity{
         this.movement.normalize();
         this.movement.multiplyScalar(speed);
         if(!this.isFlying){
-            if(Input.getKey(' ') &&  this.collider.onGround) {
-                this.movement.y = 8;
+            if(Input.getKey(' ') &&  this.collider.onGround && this.collider.velocity.y == 0) {
+                this.movement.y = this.jumpHeight * this.jumpStrength;
+                //this.collider.setLinearVelocity(0, 15, 0);
             }else{
                 this.movement.y =  this.collider.velocity.y;
+                
             }
         }
        

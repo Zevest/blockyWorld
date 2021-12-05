@@ -1,4 +1,4 @@
-const DEBUG = false;
+const DEBUG = true;
 class Application {
     static ColPrefix() {
         return "Col_";
@@ -449,6 +449,7 @@ class Application {
     mainLoop() {
 
         let deltaTime = this.clock.getDelta();
+        deltaTime = Math.min(deltaTime, 0.1);
         this.update(deltaTime * this.timeScale);
         this.draw();
         if(DEBUG) this.stats.update();
