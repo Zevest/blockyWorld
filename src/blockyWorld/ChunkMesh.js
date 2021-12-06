@@ -21,7 +21,7 @@ class ChunkMesh {
         materials.block.opaque = new THREE.MeshStandardMaterial(
                 {map:materials.texture});
         materials.block.semi = new THREE.MeshStandardMaterial(
-            {map:materials.texture, transparent: true});
+            {map:materials.texture, transparent: true, alphaTest: 1});
         materials.block.transparent = new THREE.MeshStandardMaterial(
             {map:materials.texture, transparent: true,  alphaTest: 1, shadowSide: THREE.DoubleSide});
         materials.cross = new THREE.MeshStandardMaterial(

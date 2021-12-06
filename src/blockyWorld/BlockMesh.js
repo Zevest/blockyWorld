@@ -73,13 +73,18 @@ function createBlock(blockData, verticesArray, indicesArray, uvs, faces, positio
 /// Ajoute les position et uv des sommet d'une face dans un vecteur puis
 function addFace(position, vertices, vertOffset, uvs, uvOffset, blockData, direction) {
     const SIZE = {x: 0.5, y: 0.5, z: 0.5};
+    let out = {x: 1.0, y: 1.0, z: 1.0};
     // Certains blocs peuvent avoir une taille personalise
     if(blockData.block.properties){
         const prop = blockData.block.properties;
         if(prop.size){
-            SIZE.x = prop.size.x / 2;
-            SIZE.y = prop.size.y / 2;
-            SIZE.z = prop.size.z / 2;
+            //SIZE.x = prop.size.x / 2;
+            //SIZE.y = prop.size.y / 2;
+            //SIZE.z = prop.size.z / 2;
+            out.x = prop.size.x;
+            out.y = prop.size.y;
+            out.z = prop.size.z;
+           // debugger;
         }
     }
     
@@ -102,155 +107,155 @@ function addFace(position, vertices, vertOffset, uvs, uvOffset, blockData, direc
     switch(direction){
         case BLOCK.TOP:
             // HAUT AVANT GAUCHE
-            vertices[vertOffset++] = -SIZE.x + position[(vertOffset-1)%3];
-            vertices[vertOffset++] = SIZE.y + position[(vertOffset-1)%3];
-            vertices[vertOffset++] = SIZE.z + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.x  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.y  * out.y + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.z  * 1.000 + position[(vertOffset-1)%3];
             // HAUT AVANT DROITE
-            vertices[vertOffset++] = SIZE.x + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = SIZE.y + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = SIZE.z + position[(vertOffset-1)%3]
+            vertices[vertOffset++] =  SIZE.x  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.y  * out.y + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.z  * 1.000 + position[(vertOffset-1)%3];
             // HAUT ARRIERE GAUCHE
-            vertices[vertOffset++] = -SIZE.x + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = SIZE.y + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = -SIZE.z + position[(vertOffset-1)%3]
+            vertices[vertOffset++] = -SIZE.x  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.y  * out.y + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.z  * 1.000 + position[(vertOffset-1)%3];
             // HAUT ARRIERE DROITE
-            vertices[vertOffset++] = SIZE.x + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = SIZE.y + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = -SIZE.z + position[(vertOffset-1)%3]
+            vertices[vertOffset++] =  SIZE.x  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.y  * out.y + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.z  * 1.000 + position[(vertOffset-1)%3];
             
             blockData.getUVRect(blockData.face.top).forEach( v => uvs[pos++] = v);
             break;
         case BLOCK.FRONT:
             // BOTTOM AVANT GAUCHE
-            vertices[vertOffset++] = -SIZE.x + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = -SIZE.y + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = SIZE.z + position[(vertOffset-1)%3]
+            vertices[vertOffset++] = -SIZE.x  * 1.000 + position[(vertOffset-1)%3]; 
+            vertices[vertOffset++] = -SIZE.y  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.z  * out.z + position[(vertOffset-1)%3];
             // BOTTOM AVANT DROITE
-            vertices[vertOffset++] = SIZE.x + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = -SIZE.y + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = SIZE.z + position[(vertOffset-1)%3]
+            vertices[vertOffset++] =  SIZE.x  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.y  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.z  * out.z + position[(vertOffset-1)%3];
             // HAUT AVANT GAUCHE
-            vertices[vertOffset++] = -SIZE.x + position[(vertOffset-1)%3];
-            vertices[vertOffset++] = SIZE.y + position[(vertOffset-1)%3];
-            vertices[vertOffset++] = SIZE.z + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.x  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.y  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.z  * out.z + position[(vertOffset-1)%3];
             // HAUT AVANT DROITE
-            vertices[vertOffset++] = SIZE.x + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = SIZE.y + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = SIZE.z + position[(vertOffset-1)%3]
+            vertices[vertOffset++] =  SIZE.x  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.y  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.z  * out.z + position[(vertOffset-1)%3];
             blockData.getUVRect(blockData.face.front).forEach( v => uvs[pos++] = v);
             break;
         case BLOCK.RIGHT:
             // BOTTOM AVANT DROITE
-            vertices[vertOffset++] = SIZE.x + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = -SIZE.y + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = SIZE.z + position[(vertOffset-1)%3]
+            vertices[vertOffset++] =  SIZE.x  * out.x + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.y  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.z  * 1.000 + position[(vertOffset-1)%3];
             // BOTTOM ARRIERE DROITE
-            vertices[vertOffset++] = SIZE.x + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = -SIZE.y + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = -SIZE.z + position[(vertOffset-1)%3]
+            vertices[vertOffset++] =  SIZE.x  * out.x + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.y  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.z  * 1.000 + position[(vertOffset-1)%3];
             // HAUT AVANT DROITE
-            vertices[vertOffset++] = SIZE.x + position[(vertOffset-1)%3];
-            vertices[vertOffset++] = SIZE.y + position[(vertOffset-1)%3];
-            vertices[vertOffset++] = SIZE.z + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.x  * out.x + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.y  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.z  * 1.000 + position[(vertOffset-1)%3];
             // HAUT ARRIERE DROITE
-            vertices[vertOffset++] = SIZE.x + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = SIZE.y + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = -SIZE.z + position[(vertOffset-1)%3]
+            vertices[vertOffset++] =  SIZE.x  * out.x + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.y  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.z  * 1.000 + position[(vertOffset-1)%3];
             blockData.getUVRect(blockData.face.right).forEach( v => uvs[pos++] = v);
             break;
         case BLOCK.LEFT:
             // BOTTOM ARRIERE GAUCHE
-            vertices[vertOffset++] = -SIZE.x + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = -SIZE.y + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = -SIZE.z + position[(vertOffset-1)%3]
+            vertices[vertOffset++] = -SIZE.x  * out.x + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.y  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.z  * 1.000 + position[(vertOffset-1)%3];
             // BOTTOM AVANT GAUCHE
-            vertices[vertOffset++] = -SIZE.x + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = -SIZE.y + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = SIZE.z + position[(vertOffset-1)%3]
+            vertices[vertOffset++] = -SIZE.x  * out.x + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.y  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.z  * 1.000 + position[(vertOffset-1)%3];
             // HAUT ARRIERE GAUCHE
-            vertices[vertOffset++] = -SIZE.x + position[(vertOffset-1)%3];
-            vertices[vertOffset++] = SIZE.y + position[(vertOffset-1)%3];
-            vertices[vertOffset++] = -SIZE.z + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.x  * out.x + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.y  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.z  * 1.000 + position[(vertOffset-1)%3];
             // HAUT AVANT GAUCHE
-            vertices[vertOffset++] = -SIZE.x + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = SIZE.y + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = SIZE.z + position[(vertOffset-1)%3]
+            vertices[vertOffset++] = -SIZE.x  * out.x + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.y  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.z  * 1.000 + position[(vertOffset-1)%3];
             blockData.getUVRect(blockData.face.left).forEach( v => uvs[pos++] = v);
             break;
         case BLOCK.BACK:
             // BOTTOM ARRIERE DROITE
-            vertices[vertOffset++] = SIZE.x + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = -SIZE.y + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = -SIZE.z + position[(vertOffset-1)%3]
+            vertices[vertOffset++] =  SIZE.x  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.y  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.z  * out.z + position[(vertOffset-1)%3];
             // BOTTOM ARRIERE GAUCHE
-            vertices[vertOffset++] = -SIZE.x + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = -SIZE.y + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = -SIZE.z + position[(vertOffset-1)%3]
+            vertices[vertOffset++] = -SIZE.x  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.y  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.z  * out.z + position[(vertOffset-1)%3];
             // HAUT ARRIERE DROITE
-            vertices[vertOffset++] = SIZE.x + position[(vertOffset-1)%3];
-            vertices[vertOffset++] = SIZE.y + position[(vertOffset-1)%3];
-            vertices[vertOffset++] = -SIZE.z + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.x  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.y  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.z  * out.z + position[(vertOffset-1)%3];
             // HAUT ARRIERE GAUCHE
-            vertices[vertOffset++] = -SIZE.x + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = SIZE.y + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = -SIZE.z + position[(vertOffset-1)%3]
+            vertices[vertOffset++] = -SIZE.x  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.y  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.z  * out.z + position[(vertOffset-1)%3];
             blockData.getUVRect(blockData.face.back).forEach( v => uvs[pos++] = v);
             break;
         case BLOCK.BOTTOM:
             // BOTTOM ARRIERE GAUCHE
-            vertices[vertOffset++] = -SIZE.x + position[(vertOffset-1)%3];
-            vertices[vertOffset++] = -SIZE.y + position[(vertOffset-1)%3];
-            vertices[vertOffset++] = -SIZE.z + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.x  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.y  * out.y + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.z  * 1.000 + position[(vertOffset-1)%3];
             // BOTTOM ARRIERE DROITE
-            vertices[vertOffset++] = SIZE.x + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = -SIZE.y + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = -SIZE.z + position[(vertOffset-1)%3]
+            vertices[vertOffset++] =  SIZE.x  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.y  * out.y + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.z  * 1.000 + position[(vertOffset-1)%3];
             // BOTTOM AVANT GAUCHE
-            vertices[vertOffset++] = -SIZE.x + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = -SIZE.y + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = SIZE.z + position[(vertOffset-1)%3]
+            vertices[vertOffset++] = -SIZE.x  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.y  * out.y + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.z  * 1.000 + position[(vertOffset-1)%3];
             // BOTTOM AVANT DROITE
-            vertices[vertOffset++] = SIZE.x + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = -SIZE.y + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = SIZE.z + position[(vertOffset-1)%3]
+            vertices[vertOffset++] =  SIZE.x  * 1.000 + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.y  * out.y + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.z  * 1.000 + position[(vertOffset-1)%3];
             blockData.getUVRect(blockData.face.bottom).forEach( v => uvs[pos++] = v);
             break;
         case BLOCK.DIAGONAL1:
             // BOTTOM AVANT GAUCHE
-            vertices[vertOffset++] = -SIZE.x + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = -SIZE.y + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = SIZE.z + position[(vertOffset-1)%3]
+            vertices[vertOffset++] = -SIZE.x  * out.x + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.y  * out.y + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.z  * out.z + position[(vertOffset-1)%3];
             // BOTTOM ARRIERE DROITE
-            vertices[vertOffset++] = SIZE.x + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = -SIZE.y + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = -SIZE.z + position[(vertOffset-1)%3]
+            vertices[vertOffset++] =  SIZE.x  * out.x + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.y  * out.y + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.z  * out.z + position[(vertOffset-1)%3];
             // HAUT AVANT GAUCHE
-            vertices[vertOffset++] = -SIZE.x + position[(vertOffset-1)%3];
-            vertices[vertOffset++] = SIZE.y + position[(vertOffset-1)%3];
-            vertices[vertOffset++] = SIZE.z + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.x  * out.x + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.y  * out.y + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.z  * out.z + position[(vertOffset-1)%3];
             // HAUT ARRIERE DROITE
-            vertices[vertOffset++] = SIZE.x + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = SIZE.y + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = -SIZE.z + position[(vertOffset-1)%3]
+            vertices[vertOffset++] =  SIZE.x  * out.x + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.y  * out.y + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.z  * out.z + position[(vertOffset-1)%3];
             blockData.getUVRect(blockData.face.front).forEach( v => uvs[pos++] = v);
             break;
         case BLOCK.DIAGONAL2:
             // BOTTOM ARRIERE GAUCHE
-            vertices[vertOffset++] = -SIZE.x + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = -SIZE.y + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = -SIZE.z + position[(vertOffset-1)%3]
+            vertices[vertOffset++] = -SIZE.x  * out.x + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.y  * out.y + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.z  * out.z + position[(vertOffset-1)%3];
             // BOTTOM AVANT DROITE
-            vertices[vertOffset++] = SIZE.x + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = -SIZE.y + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = SIZE.z + position[(vertOffset-1)%3]
+            vertices[vertOffset++] =  SIZE.x  * out.x + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.y  * out.y + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.z  * out.z + position[(vertOffset-1)%3];
             // HAUT ARRIERE GAUCHE
-            vertices[vertOffset++] = -SIZE.x + position[(vertOffset-1)%3];
-            vertices[vertOffset++] = SIZE.y + position[(vertOffset-1)%3];
-            vertices[vertOffset++] = -SIZE.z + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.x  * out.x + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.y  * out.y + position[(vertOffset-1)%3];
+            vertices[vertOffset++] = -SIZE.z  * out.z + position[(vertOffset-1)%3];
             // HAUT AVANT DROITE
-            vertices[vertOffset++] = SIZE.x + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = SIZE.y + position[(vertOffset-1)%3]
-            vertices[vertOffset++] = SIZE.z + position[(vertOffset-1)%3]
+            vertices[vertOffset++] =  SIZE.x  * out.x + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.y  * out.y + position[(vertOffset-1)%3];
+            vertices[vertOffset++] =  SIZE.z  * out.z + position[(vertOffset-1)%3];
             blockData.getUVRect(blockData.face.front).forEach( v => uvs[pos++] = v);
             break;
         case BLOCK.DIAGONAL:
