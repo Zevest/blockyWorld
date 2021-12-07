@@ -533,7 +533,7 @@ class Application {
     }
 
     moveSelector(step){
-        this.selectorPos += -step;
+        this.selectorPos += step;
         if(this.selectorPos < 0) {
             this.selectorPos = 0;
             --this.hotBarStart;
