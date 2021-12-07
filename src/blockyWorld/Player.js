@@ -38,22 +38,38 @@ class Player extends Entity{
         this.zoomAnim = 0;
         this.sneakAnim = this.cameraPosition.y;
         this.isFlying = false;
+        this.spacePressed = false;
+        this.ZPressed = false;
         this.lastTimePressingSpace = 0;
         this.lastTimePressingZ = 0;
         this.collider = this.getComponent(BoxCollider);
         this.FunctionToggletime = 0.25;
-        
-        Input.onKeyUp = (key) => {
-            if(key == ' '){
+
+
+        Input.onKeyDown = (key) => {
+            if(key == ' ' && !this.spacePressed){
                 if(app.time - this.lastTimePressingSpace < this.FunctionToggletime)
                     this.toggleFly();
-                else    
-                    this.lastTimePressingSpace = app.time;
+                else this.lastTimePressingSpace = app.time;
+                this.spacePressed = true;
             }
-            if(key == 'z') {
-                this.lastTimePressingZ = app.time;
+            if(key == 'z' && !this.ZPressed) {
+                if(app.time - this.lastTimePressingZ < this.FunctionToggletime){
+                    this.isRunning = true;
+                    this.lastTimePressingZ = 0;
+                }
+                else this.lastTimePressingZ = app.time;
+                this.ZPressed = true;
             }
         };
+        Input.onKeyUp = (key) =>{
+            if(key == ' '){
+                this.spacePressed = false;
+            }
+            if(key == 'z') {
+                this.ZPressed = false;
+            }
+        }
         this.collider.onSideCollision = (x,y,z) => {this.isRunning = false;};
     }
 
@@ -63,7 +79,7 @@ class Player extends Entity{
         this.CalculateMovement();
         if(!this.isFlying)
              this.collider.applyForce(0, -28, 0);
-        //let fall =  this.collider.velocity.y;
+       
         this.collider.setLinearVelocityV(this.movement);
         this.collider.setOffset(this.cameraPosition);
         this.calculateAnimation(deltaTime * 10);
@@ -94,9 +110,7 @@ class Player extends Entity{
             rotX = this.rotationSpeed * move.x * this.mouseSensitivity;
             rotY = this.rotationSpeed * move.y * this.mouseSensitivity;
         }
-        //console.log(this.transform);
-        //this.transform.zoom = 1 + Input.getKey('x') * this.zoom;
-        //this.transform.updateProjectionMatrix();
+
         if(Input.getKey("ArrowLeft")) {
             rotX -= this.rotationSpeed * this.sensitivity;
         }
@@ -117,9 +131,9 @@ class Player extends Entity{
         }
         if(rotX != 0 || rotY != 0 || rotZ != 0 ){
             this.tmpeuler.setFromQuaternion(this.transform.quaternion);
-            this.tmpeuler.y -= rotX /* deltaTime*/;
-            this.tmpeuler.x = clamp(this.tmpeuler.x - (rotY /* deltaTime*/), Player.minAngleY, Player.maxAngleY);
-            this.tmpeuler.z -= rotZ /* deltaTime*/;
+            this.tmpeuler.y -= rotX ;
+            this.tmpeuler.x = clamp(this.tmpeuler.x - (rotY), Player.minAngleY, Player.maxAngleY);
+            this.tmpeuler.z -= rotZ;
             this.transform.quaternion.setFromEuler(this.tmpeuler);
         }
     }
@@ -139,11 +153,7 @@ class Player extends Entity{
         if(Input.getKey("Control")){
             this.isRunning = true
         }
-        if(Input.getKey('z')) {
-            if(app.time - this.lastTimePressingZ < this.FunctionToggletime){
-                this.isRunning = true;
-                this.lastTimePressingZ = 0;
-            }
+        if(Input.getKey('z')) {  
            this.movement.add(this.forward);
         }
         if(Input.getKey('s')) {
@@ -156,12 +166,12 @@ class Player extends Entity{
         if(Input.getKey('d')) {
            this.movement.sub(this.right);
         }
-        if(this.movement.length() == 0)
-            this.isRunning = false;
+        let isMoving = this.movement.length() != 0;
+        if(!isMoving) this.isRunning = false;
 
         if(Input.getKey("Shift")) {
             this.isSneaking = true;
-            this.isRunning = false;
+            if(!this.isFlying) this.isRunning = false;
         }else{
             this.isSneaking = false;
         }
@@ -170,24 +180,30 @@ class Player extends Entity{
         
         if(this.isFlying){
             speed = (this.isRunning ? this.flyingSprintSpeed: this.flyingSpeed);
-            if(this.isSneaking){
-                this.movement.y -= 0.5;
-            }
-            if(Input.getKey(' ')){
-                this.movement.y += 0.5;
-            }
         }else{
             speed = (this.isSneaking ? this.sneakSpeed : (this.isRunning ? this.sprintSpeed : this.walkSpeed));
         }
-        this.movement.normalize();
-        this.movement.multiplyScalar(speed);
+        if(isMoving){
+            this.movement.normalize();
+            this.movement.multiplyScalar(speed);
+        }else{
+            this.movement.x = this.collider.velocity.x;
+            this.movement.z = this.collider.velocity.z;
+        }
         if(!this.isFlying){
-            if(Input.getKey(' ') &&  this.collider.onGround && this.collider.velocity.y == 0) {
-                this.movement.y = this.jumpHeight * this.jumpStrength;
-                //this.collider.setLinearVelocity(0, 15, 0);
+            if(Input.getKey(' ') && this.collider.onGround){
+                if(this.collider.velocity.y == 0)
+                    this.movement.y = this.jumpHeight * this.jumpStrength;
             }else{
                 this.movement.y =  this.collider.velocity.y;
                 
+            }
+        }else{
+            if(this.isSneaking){
+                this.movement.y = -speed;
+            }
+            if(Input.getKey(' ')){
+                this.movement.y = speed;
             }
         }
        
