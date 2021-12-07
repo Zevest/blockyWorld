@@ -1,7 +1,6 @@
 class BoxCollider extends Component {
     constructor(object3D, width, height, depth) {
         super(object3D, width, height, depth);
-        console.log(object3D);
        // console.log(this.acceleration, this.velocity, this.position);
         if(!width || !height || ! depth){
             this.autoSize = true;
@@ -29,8 +28,8 @@ class BoxCollider extends Component {
         this.acceleration = new THREE.Vector3();
                 
         this.box = new THREE.Box3();
-        this.friction = 0.8;
-        this.airFriction = 0.999;
+        this.friction = 0.9;
+        this.airFriction = 0.99;
         this.onGround = false;
         this.simulationStep = 3;
     }
@@ -265,6 +264,7 @@ class BoxCollider extends Component {
             this.height = this.parent.scale.y;
             this.depth = this.parent.scale.z;
         }
+        let moving = this.velocity.x != 0;
         this.velocity.addScaledVector(this.acceleration, deltaTime);
         this.acceleration.set(0, 0, 0);
 
@@ -278,10 +278,11 @@ class BoxCollider extends Component {
             collide = this.MoveAndCollideYXZ(deltaTime);
         else
             collide = this.MoveAndCollideYZX(deltaTime);
-       
+        
         if(this.onGround){
-            //this.velocity.x *= this.friction;
-            //this.velocity.z *= this.friction;
+           // console.log(moving, this.velocity.x != 0);
+            this.velocity.x *= this.friction;
+            this.velocity.z *= this.friction;
         }else{
             this.velocity.x *= this.airFriction;
             this.velocity.z *= this.airFriction;
