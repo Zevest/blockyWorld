@@ -70,7 +70,8 @@ class Chunk {
                 let height = Math.min(128, Math.max(30, Chunk.height/ 2)) + Math.floor(2 *(sample + sample2 +  sample3 + sample4 * mult)*(Chunk.height / 4));
                 //console.log(height);
                 //debugger;
-                for(let j = 0; j < height-4; ++j) { this.setBlock(blockList[0].id, i, j, k)}
+                this.setBlock(blockList[13].id, i, 0, k);
+                for(let j = 1; j < height-4; ++j) { this.setBlock(blockList[0].id, i, j, k)}
                 for(let j = height-4; j < height; ++j) {
                     if(j > 128) this.setBlock(blockList[48].id, i, j, k)
                     else this.setBlock(blockList[1].id, i, j, k)
