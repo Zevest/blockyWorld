@@ -1,4 +1,4 @@
-const DEBUG = true;
+const DEBUG = false;
 class Application {
     static ColPrefix() {
         return "Col_";
@@ -12,6 +12,7 @@ class Application {
         this.canvas = window.document.createElement("canvas");
         this.canvas.id = "container";
         this.canvas2D = document.createElement("canvas");
+        
         this.canvas2D.id = "2D";
         this.ctx = this.canvas2D.getContext("2d");
         this.shouldEnd = false;
@@ -27,16 +28,18 @@ class Application {
         this.time = this.dayLength / 4;
         this.timeScale = 1.0;
        
-        
+        this.RenderedScene = 1;
         this.scene = new THREE.Scene();
+        this.scene2 = new THREE.Scene();
         
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
         this.camera.position.set(0, 150, 0);
-        this.rayCaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 5);
-
         this.camera.matrixAutoUpdate = false;
+        this.rayCaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 5);
+        
+        
 
-        this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true });
+        this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: true});
         this.renderer.setClearColor(Color(191, 209, 229));
         this.renderer.shadowMap.enabled = true;
         //this.renderer.shadowMapCullFace = THREE.CullFaceNone;
@@ -45,7 +48,7 @@ class Application {
         //this.renderer.shadowMap.type = THREE.PCFShadowMap
         
 
-        document.body.appendChild(this.renderer.domElement);
+        
         document.body.style.backgroundColor = "#000000";
         window.addEventListener("resize", () => this.resizeViewPort());
         window.addEventListener('beforeunload',  (e)=> this.cleanUp());
@@ -55,22 +58,25 @@ class Application {
 
         
         this.currentBlock = 0;
+        this.hotBarStart =0;
+        this.selectorPos = 0;
         this.hits = [];
 
     }
 
+    updateCameraView(width, height){
+        this.renderer.setSize(width - 25, height - 25);
+        this.camera.aspect = width / height;
+        this.canvas2D.width = width - 25;
+        this.canvas2D.height = height - 25;
+
+        this.camera.updateProjectionMatrix();
+    }
+
     resizeViewPort() {
         this.renderer.setPixelRatio(window.devicePixelRatio);
-        this.renderer.setSize(window.innerWidth - 25, window.innerHeight - 25);
-        this.camera.aspect = window.innerWidth / window.innerHeight;
-        this.canvas2D.width = window.innerWidth - 25;
-        this.canvas2D.height = window.innerHeight - 25;
-        this.camera.updateProjectionMatrix();
-        //this.ctx.strokeRect(2.5, 2.5, this.canvas2D.width - 4, this.canvas2D.height - 4);
-        if (this.screen) {
-            this.screen.scale.x = window.innerWidth / 2 / window.innerHeight;
-            this.screen.scale.y = 0.5;
-        }
+        this.updateCameraView(window.innerWidth , window.innerHeight);
+
     }
 
     initMaterials() {
@@ -85,6 +91,10 @@ class Application {
 
         this.materials = {
             default: new THREE.MeshStandardMaterial({color: Color(224)}),
+            defaultTex: new THREE.MeshStandardMaterial({
+                color: Color(224),
+                map: new THREE.TextureLoader().load("../../res/image/"+BlockInfo.tileSetInfo.image)
+            }),
             blue: new THREE.MeshPhysicalMaterial({color: Color(102, 179, 255), transparent: true, opacity: 0.5}),
             chunk: ChunkMesh.createMaterial(),
             BlockOutlineTexture: new THREE.TextureLoader().load(blockOutlineUrl),
@@ -108,6 +118,11 @@ class Application {
             depthTest: false,
             depthWrite: false,
         });
+        
+        //this.BlockItemData = initBlockAtlasData()
+        initRenderData(this, this.canvas2D, this.ctx, this.materials.chunk);
+
+        
     }
 
     crossMesh(material){
@@ -128,114 +143,141 @@ class Application {
     }
 
     initScene() {
-        this.skyLight = new THREE.AmbientLight(Color(128)); //new THREE.HemisphereLight(0xbfd1e5);
-        //this.skyLight.position.set(new THREE.Vector3(0, 0, 0));
-        this.skyLight.name = "SkyLight";
+        // SCENE 1
+        {
+            this.skyLight = new THREE.AmbientLight(Color(128)); //new THREE.HemisphereLight(0xbfd1e5);
+            //this.skyLight.position.set(new THREE.Vector3(0, 0, 0));
+            this.skyLight.name = "SkyLight";
 
-        this.scene.add(this.skyLight);
-        //this.scene.add(this.skyLight, 50);
+            this.scene.add(this.skyLight);
+            //this.scene.add(this.skyLight, 50);
 
-       // this.sunLight = new THREE.PointLight(Color(255), 0.5, 0, 2);
-        this.sunLight = new THREE.DirectionalLight(Color(255), 0.5);
-        this.sunLight.castShadow = true;
-        this.sunLight.name = "Sun Light";
-        this.sunLight.position.x = 900;
-        this.sunLight.position.y = 500;
-        this.sunLight.position.z = 700;
-        this.sunLight.shadow.mapSize.width = 4096;
-        this.sunLight.shadow.mapSize.height = 4096;
-        //this.sunLight.shadow.bias = 0.0001;
-        //this.sunLight.shadow.bias = -0.0005;
-        //this.sunLight.shadow.camera.far = 1500;
-        //this.frustum = {
-        this.sunLight.shadow.camera.near = this.lightDist-700,
-        this.sunLight.shadow.camera.far = this.lightDist + 300,
-        this.sunLight.shadow.camera.top = 20,
-        this.sunLight.shadow.camera.bottom = -80,
-        this.sunLight.shadow.camera.left = -60,
-        this.sunLight.shadow.camera.right = 60
-        //};
+        // this.sunLight = new THREE.PointLight(Color(255), 0.5, 0, 2);
+            this.sunLight = new THREE.DirectionalLight(Color(255), 0.5);
+            this.sunLight.castShadow = true;
+            this.sunLight.name = "Sun Light";
+            this.sunLight.position.x = 900;
+            this.sunLight.position.y = 500;
+            this.sunLight.position.z = 700;
+            this.sunLight.shadow.mapSize.width = 4096;
+            this.sunLight.shadow.mapSize.height = 4096;
+            //this.sunLight.shadow.bias = 0.0001;
+            //this.sunLight.shadow.bias = -0.0005;
+            //this.sunLight.shadow.camera.far = 1500;
+            //this.frustum = {
+            this.sunLight.shadow.camera.near = this.lightDist-700,
+            this.sunLight.shadow.camera.far = this.lightDist + 300,
+            this.sunLight.shadow.camera.top = 20,
+            this.sunLight.shadow.camera.bottom = -80,
+            this.sunLight.shadow.camera.left = -60,
+            this.sunLight.shadow.camera.right = 60
+            //};
 
 
-        this.sunLight.target =  new THREE.Object3D();
-        this.scene.add(this.sunLight.target);
-       
+            this.sunLight.target =  new THREE.Object3D();
+            this.scene.add(this.sunLight.target);
         
-        this.scene.add(this.sunLight); 
+            
+            this.scene.add(this.sunLight); 
 
 
-        this.world = new World("Hello", Math.floor(Math.random() * 65000)/*1561*/);
-        this.world.initWorld();
-        this.world.generateWorld();
-        this.world.generateMeshes(this.materials.chunk);
+            this.world = new World("Hello", Math.floor(Math.random() * 65000)/*1561*/);
+            this.world.initWorld();
+            this.world.generateWorld();
+            this.world.generateMeshes(this.materials.chunk);
 
+            
+            this.ground = new THREE.Mesh(this.planeGeometry, this.materials.blue);
+            
+            this.ground.rotateX(-Math.PI / 2.0);
+            this.ground.name = "Ground";
+            this.ground.position.y = 100.8;
+            this.ground.scale.x = this.world.range * 2 * 16;
+            this.ground.scale.y = this.world.range * 2 * 16;
+            this.ground.receiveShadow = true;
+
+
+            this.Other = new THREE.Mesh(this.boxGeometry, this.materials.BlockOutline);//this.crossMesh(this.materials.BlockOutline);
+            this.Other.scale.set(0.1,0.1,0.1);
+            this.Other.name = "Other";
+            this.scene.add(this.Other);
+
+            
+            this.BoxHelper2 = new THREE.Mesh(this.boxGeometry, this.materials.BlockOutline);
+            this.BoxHelper2.scale.set(1.001, 1.001, 1.001);
+            this.BoxHelper2.position.set(this.camera.position.x, this.camera.position.y, this.camera.position.z+5);
+            this.BoxHelper2.renderOrder = 100;
+            this.BoxHelper2.name = "BoxHelper";
+            this.scene.add(this.BoxHelper2);
+
+            //this.Box = new THREE.Mesh(this.boxGeometry, this.materials.default);
+            
+            //this.Box.name = "ColliderTest";
+            //this.Box.position.copy(this.camera.position);
+            //this.scene.add(this.Box);
+            //let collider = addComponent(this.Box, BoxCollider, 0.6, 1.8, 0.6);
+            //this.BoxEntity = new Player(this.Box);//Entity.NewEntity(this.Box);
+            //this.BoxEntity.addComponent(BoxCollider);
+
+            //this.scene.add(collider.box);
+            
+            this.screen = new THREE.Mesh(this.planeGeometry, this.materials.screen2D);
+
+            this.screen.renderOrder = 101;
+
+            this.screen.name = "screen";
+            this.camera.add(this.screen);
         
-        this.ground = new THREE.Mesh(this.planeGeometry, this.materials.blue);
-        
-        this.ground.rotateX(-Math.PI / 2.0);
-        this.ground.name = "Ground";
-        this.ground.position.y = 100.8;
-        this.ground.scale.x = this.world.range * 2 * 16;
-        this.ground.scale.y = this.world.range * 2 * 16;
-        this.ground.receiveShadow = true;
+            
+            this.scene.add(this.camera);
+            this.screen.position.z = -.3;
 
-
-        this.Other = new THREE.Mesh(this.boxGeometry, this.materials.BlockOutline);//this.crossMesh(this.materials.BlockOutline);
-        this.Other.scale.set(0.1,0.1,0.1);
-        this.Other.name = "Other";
-        this.scene.add(this.Other);
-
-        
-        this.BoxHelper2 = new THREE.Mesh(this.boxGeometry, this.materials.BlockOutline);
-        this.BoxHelper2.scale.set(1.001, 1.001, 1.001);
-        this.BoxHelper2.position.set(this.camera.position.x, this.camera.position.y, this.camera.position.z+5);
-        this.BoxHelper2.renderOrder = 100;
-        this.BoxHelper2.name = "BoxHelper";
-        this.scene.add(this.BoxHelper2);
-
-        //this.Box = new THREE.Mesh(this.boxGeometry, this.materials.default);
-        
-        //this.Box.name = "ColliderTest";
-        //this.Box.position.copy(this.camera.position);
-        //this.scene.add(this.Box);
-        //let collider = addComponent(this.Box, BoxCollider, 0.6, 1.8, 0.6);
-        //this.BoxEntity = new Player(this.Box);//Entity.NewEntity(this.Box);
-        //this.BoxEntity.addComponent(BoxCollider);
-
-        //this.scene.add(collider.box);
-        
-        
-        
-
-        this.screen = new THREE.Mesh(this.planeGeometry, this.materials.screen2D);
-
-        this.screen.renderOrder = 101;
-
-        this.screen.name = "screen";
-        this.camera.add(this.screen);
-       
-        
-        this.scene.add(this.camera);
-        this.screen.position.z = -.3;
-
-       
-
-        if(DEBUG){
-            this.scene.add(new THREE.DirectionalLightHelper(this.sunLight, 5));
-            this.cameraHelper = new THREE.CameraHelper(this.sunLight.shadow.camera);
-            this.axes = new THREE.AxesHelper(100);
-            this.axes.position.y = 120;
-            this.scene.add(this.axes);
-            this.scene.add(new THREE.GridHelper(100, 100));
-            this.scene.add(this.cameraHelper);
+            if(DEBUG){
+                this.scene.add(new THREE.DirectionalLightHelper(this.sunLight, 5));
+                this.cameraHelper = new THREE.CameraHelper(this.sunLight.shadow.camera);
+                this.axes = new THREE.AxesHelper(100);
+                this.axes.position.y = 120;
+                this.scene.add(this.axes);
+                this.scene.add(new THREE.GridHelper(100, 100));
+                this.scene.add(this.cameraHelper);
+            }
+            this.scene.add(this.world.world);
         }
 
-
-        this.scene.add(this.world.world);
-
+        /// SCENE 2
+        
+        /*{
+            this.secondLight = new THREE.AmbientLight(Color(128));
+            this.thirdLight = new THREE.PointLight(Color(255), 0.8);
+            
+            this.scene2.add(this.thirdLight);
+            this.scene2.add(this.secondLight);
+            console.log("mats: ", this.materials.chunk);
+            this.blockItems = createBlocksItem(this.materials.chunk);
+            console.log("blockItems", this.blockItems);
+            const ITEM_COL = 16;
+            const UNIT =  (this.camera2.right - this.camera2.left) / ITEM_COL * 4;
+            console.log("UNIT", UNIT);
+            for(let i = 0; i< this.blockItems.length; ++i) {
+                
+                this.blockItems[i].position.set(((i % ITEM_COL) - ITEM_COL/2) * UNIT * 1.5, (-Math.floor(i / ITEM_COL) * UNIT + UNIT*2) * 1.5, -UNIT);
+                this.blockItems[i].scale.set(UNIT, UNIT, UNIT);
+                if(BlockData.CROSS_LIST[i]){
+                    //this.blockItems[i].rotateY(Math.PI);
+                }
+                else {
+                    this.blockItems[i].rotateX(Math.PI/12);
+                    this.blockItems[i].rotateY(Math.PI/4);
+                }
+            
+                //this.blockItems[i].scale.set(16, 16, 16);
+                this.scene2.add(this.blockItems[i]);
+                
+            }
+            this.thirdLight.position.set(-UNIT * ITEM_COL  -100, UNIT * 5, 150);
+        }*/
     }
 
-    
     start() {
         Input.onMouseDown = (button) => {
             if (!Input.hasMouseLock) return;
@@ -243,51 +285,48 @@ class Application {
             if (this.hits.length) {
                 let hitpos = this.hits[0].point;
                 switch (button) {
-                    case Input.M_LEFT:
-                        {
-                            World.currentWorld.setBlock(-1, hitpos.x, hitpos.y, hitpos.z, false);
-                            this.chunkHasChanged = true;
-                            let blockID = World.currentWorld.getBlock(hitpos.x, hitpos.y + 1, hitpos.z);
-                            let block = BlockData.BLOCK_LIST[blockID]
-                            if (block && block.block.type == BlockData.BLOCK_TYPE[3]) {
-                                World.currentWorld.setBlock(-1, hitpos.x, hitpos.y + 1, hitpos.z, false);
-                            }
-                            break;
+                case Input.M_LEFT:
+                    {
+                        World.currentWorld.setBlock(-1, hitpos.x, hitpos.y, hitpos.z, false);
+                        this.chunkHasChanged = true;
+                        let blockID = World.currentWorld.getBlock(hitpos.x, hitpos.y + 1, hitpos.z);
+                        let block = BlockData.BLOCK_LIST[blockID]
+                        if (block && block.block.type == BlockData.BLOCK_TYPE[3]) {
+                            World.currentWorld.setBlock(-1, hitpos.x, hitpos.y + 1, hitpos.z, false);
                         }
-                    case Input.M_MIDDLE:
-                        {
-                            let block = World.currentWorld.getBlock(hitpos.x, hitpos.y, hitpos.z);
-                            this.currentBlock = block;
-                            console.log(block);
-                            break;
-                        }
-                    case Input.M_RIGHT:
-                        {
-                            let c = new THREE.Vector3();
-                            
-                            c.add(hitpos).sub(this.camera.position);
-                            if(c.length() < 1.9) break;
-                            hitpos.addScaledVector(this.hits[0].face.normal, 0.9);
-                            World.currentWorld.setBlock(this.currentBlock, hitpos.x, hitpos.y, hitpos.z, false);
-                            this.chunkHasChanged = true;
-                            break;
-                        }
+                        break;
+                    }
+                case Input.M_MIDDLE:
+                    {
+                        let block = World.currentWorld.getBlock(hitpos.x, hitpos.y, hitpos.z);
+                        this.setSelectorTo(block);
+                        break;
+                    }
+                case Input.M_RIGHT:
+                    {
+                        let c = new THREE.Vector3();
+                        
+                        c.add(hitpos).sub(this.camera.position);
+                        if(c.length() < 1.9) break;
+                        hitpos.addScaledVector(this.hits[0].face.normal, 0.9);
+                        World.currentWorld.setBlock(this.currentBlock, hitpos.x, hitpos.y, hitpos.z, false);
+                        this.chunkHasChanged = true;
+                        break;
+                    }
                 }
             }
         }
+
+        Input.onMouseWheel = (_, deltaY) => {this.moveSelector(deltaY)}
         this.entity = new Player(this.camera);
-        console.log(this.entity);
-        //this.entity.addComponent(CameraController);
-        //console.log(this.entity);
-        //this.cameraController = addComponent(this.camera, CameraController);
         
         BlockInfo.initData("../../res/json/block.json", "../../res/json/MinecraftTiles.json",
             "../../res/shader/block_cross_vert.glsl", "../../res/shader/block_cross_frag.glsl",
             () => this.setup());
-        
     }
 
     setup() {
+        this.renderer.setPixelRatio(window.devicePixelRatio);
         this.initMaterials();
 
         this.initScene();
@@ -320,8 +359,9 @@ class Application {
             //timeFolder.open();
         }
     
-        this.resizeViewPort();
+        //
         Entity.Start();
+
         this.mainLoop();
     }
 
@@ -350,9 +390,6 @@ class Application {
                         // CROSS geometry
                     let id = this.world.getBlock(Math.floor(hitPos.x) + 0.5, Math.floor(hitPos.y) + 0.5, Math.floor(hitPos.z) + 0.5)
                     if(id > 0){
-                    
-                    
-                    //console.log(blockData);
                     
                     this.tile = BlockInfo.getTileFromName(BlockData.BLOCK_LIST[id].face.front)
                     const prop = BlockInfo.getPropertyObject(this.tile.properties);
@@ -384,66 +421,79 @@ class Application {
     }
 
     update(deltaTime) {
-        Entity.Update(deltaTime);
-        //console.log(collider);
-        if(this.shouldEnd) return;
-        this.world.update(this.camera.position);
-        let dayTime = (this.time % this.dayLength) / this.dayLength;
-        let angle = 2 * Math.PI * dayTime;
-        let posX = this.camera.position.x + Math.cos(angle) * this.lightDist;
-        let posY = this.camera.position.y + Math.sin(angle) * this.lightDist;
-        let posZ = this.camera.position.z + Math.cos(angle) * (this.lightDist / 10.0);
-        
-        let ligthTime = ((this.time +  1 * this.dayLength/5)% this.dayLength) / this.dayLength;
-        let t = clamp(Math.abs(ligthTime-0.5)*2, .2, .8);
-        if(t == 0.2) t = 0;
-        else if (t == 0.8) t = 1;
-        this.lerpColor.r = lerp(t, this.dayColor.r, this.nightColor.r);
-        this.lerpColor.g = lerp(t, this.dayColor.g, this.nightColor.g);
-        this.lerpColor.b = lerp(t, this.dayColor.b, this.nightColor.b);
-        this.renderer.setClearColor(Color(this.lerpColor.r, this.lerpColor.g, this.lerpColor.b));
+        if(this.RenderedScene == 1){
+            Entity.Update(deltaTime);
+            //console.log(collider);
+            if(this.shouldEnd) return;
+            this.world.update(this.camera.position);
+            let dayTime = (this.time % this.dayLength) / this.dayLength;
+            let angle = 2 * Math.PI * dayTime;
+            let posX = this.camera.position.x + Math.cos(angle) * this.lightDist;
+            let posY = this.camera.position.y + Math.sin(angle) * this.lightDist;
+            let posZ = this.camera.position.z + Math.cos(angle) * (this.lightDist / 10.0);
+            
+            let ligthTime = ((this.time +  1 * this.dayLength/5)% this.dayLength) / this.dayLength;
+            let t = clamp(Math.abs(ligthTime-0.5)*2, .2, .8);
+            if(t == 0.2) t = 0;
+            else if (t == 0.8) t = 1;
+            this.lerpColor.r = lerp(t, this.dayColor.r, this.nightColor.r);
+            this.lerpColor.g = lerp(t, this.dayColor.g, this.nightColor.g);
+            this.lerpColor.b = lerp(t, this.dayColor.b, this.nightColor.b);
+            this.renderer.setClearColor(Color(this.lerpColor.r, this.lerpColor.g, this.lerpColor.b));
 
-        let tmp = World.ToLocalCoord(this.camera.position.x, this.camera.position.y, this.camera.position.z);
-        this.sunLight.target.position.set(tmp.chunkX * Chunk.width + tmp.x, tmp.y, tmp.chunkZ * Chunk.depth + tmp.z);
-        this.sunLight.position.set(posX, posY, posZ);
-        
-        this.ground.position.set(this.camera.position.x, this.ground.position.y, this.camera.position.z);
-        
-        let hitPos = this.rayCast();
-        //if(hitPos) this.Other.position.set(hitPos.x, hitPos.y, hitPos.z);
-        if (this.chunkHasChanged && hitPos) {
+            let tmp = World.ToLocalCoord(this.camera.position.x, this.camera.position.y, this.camera.position.z);
+            this.sunLight.target.position.set(tmp.chunkX * Chunk.width + tmp.x, tmp.y, tmp.chunkZ * Chunk.depth + tmp.z);
+            this.sunLight.position.set(posX, posY, posZ);
+            
+            this.ground.position.set(this.camera.position.x, this.ground.position.y, this.camera.position.z);
+            
+            let hitPos = this.rayCast();
+            //if(hitPos) this.Other.position.set(hitPos.x, hitPos.y, hitPos.z);
+            if (this.chunkHasChanged && hitPos) {
 
-            let updatedChunkID = this.world.getNearbyChunk(hitPos.x, hitPos.y, hitPos.z, 1, false);
-            let chunkToUpdate = []
-            updatedChunkID.forEach((id) => chunkToUpdate.push(this.world.chunks[id].chunkObj));
-            chunkToUpdate.forEach((obj) => {
-                this.world.updateChunk(obj, this.world.chunks[obj.name]);
-                obj.needsUpdate = true;
-            });
-            this.chunkHasChanged = false;
+                let updatedChunkID = this.world.getNearbyChunk(hitPos.x, hitPos.y, hitPos.z, 1, false);
+                let chunkToUpdate = []
+                updatedChunkID.forEach((id) => chunkToUpdate.push(this.world.chunks[id].chunkObj));
+                chunkToUpdate.forEach((obj) => {
+                    this.world.updateChunk(obj, this.world.chunks[obj.name]);
+                    obj.needsUpdate = true;
+                });
+                this.chunkHasChanged = false;
+            }
+            this.screen.scale.x = window.innerWidth / 2 / window.innerHeight / this.camera.zoom;
+            this.screen.scale.y = 0.46 / this.camera.zoom;
+
+            this.time += deltaTime * this.timeScale;
         }
-        this.time += deltaTime * this.timeScale;
     }
 
     drawScreen() {
-        this.ctx.fillStyle = "white";
-        let unit = Math.min(Math.max(1000, Math.max(this.canvas2D.width, this.canvas2D.height)), 1200);
-        let wm = unit / 300;
-        let w = unit / 100/* * this.camera.aspect*/;
-        let hm = unit / 300;
-        let h = unit / 100;
+        this.ctx.clearRect(0, 0, this.canvas2D.width, this.canvas2D.height);
+        drawCross();
+        if(isReady() && renderData.fileLoaded > 0){
+            //this.ctx.fillRect(200, 200, this.materials.BlockItemAtlas.width, this.materials.BlockItemAtlas.height);
+            //this.ctx.drawImage(this.materials.BlockItemAtlas,200, 200);
+            //this.ctx.drawImage(this.materials.BlockItemAtlas, x * w, y * h,  w, h, 200, 200, w, h);
+            
+            drawHotBar(this.canvas2D.width/2 - 200, this.canvas2D.height - 50, 50);
+            for(let i = 0; i < 9; ++i){
+                drawBlock((this.hotBarStart + i)%BlockData.BLOCK_LIST.length,
+                    this.canvas2D.width/2 - 191 + i * 45.5,
+                    this.canvas2D.height - 42.5, 
+                    33);
+            }
+            drawSelector(this.canvas2D.width/2 - 200 + this.selectorPos * 45.5,
+                this.canvas2D.height - 51, 52);
 
-        this.ctx.fillRect(this.canvas2D.width / 2 - w / 2, this.canvas2D.height / 2 - hm / 2, w, hm);
-        this.ctx.fillRect(this.canvas2D.width / 2 - wm / 2, this.canvas2D.height / 2 - h / 2, wm, h);
-        this.ctx.fillStyle = "grey";
-        this.ctx.fillRect(this.canvas2D.width / 2 - w / 2 + 1, this.canvas2D.height / 2 - hm / 2 + 1, w - 2, hm - 2);
-        this.ctx.fillRect(this.canvas2D.width / 2 - wm / 2 + 1, this.canvas2D.height / 2 - h / 2 + 1, wm - 2, h - 2);
+        }
         this.materials.screen2DTexture.needsUpdate = true
     }
 
     draw() {
-        this.drawScreen();
-        this.renderer.render(this.scene, this.camera);
+        if(this.RenderedScene == 1){
+            this.drawScreen();
+            this.renderer.render(this.scene, this.camera);
+        }
     }
 
     mainLoop() {
@@ -456,6 +506,45 @@ class Application {
         if(!this.shouldEnd) requestAnimationFrame(() => this.mainLoop());
 
     }
+
+    setSelectorTo(block){
+        let d1 = block - this.hotBarStart;
+        let d2 = (block + BlockData.BLOCK_LIST.length) - this.hotBarStart;
+        let d = AbsoluteMinSign(d1, d2);
+        if(Math.sign(d) > 0){
+            if( Math.abs(d) > 8){
+                this.hotBarStart = block - 8;
+                this.selectorPos = 8;
+            }
+            else
+                this.selectorPos = d;
+        }else{
+            if( Math.abs(d) > 8){
+                this.hotBarStart = block;
+                this.selectorPos = 0;
+            }
+            else{
+                this.hotBarStart += d;
+                this.selectorPos=0;
+            }
+        }
+        if(this.hotBarStart < 0) this.hotBarStart += BlockData.BLOCK_LIST.length;
+        this.currentBlock = (this.hotBarStart+  this.selectorPos) % BlockData.BLOCK_LIST.length;
+    }
+
+    moveSelector(step){
+        this.selectorPos += -step;
+        if(this.selectorPos < 0) {
+            this.selectorPos = 0;
+            --this.hotBarStart;
+            if(this.hotBarStart  < 0)
+                this.hotBarStart = BlockData.BLOCK_LIST.length - 1;
+        }else if(this.selectorPos > 8) {
+            ++this.hotBarStart
+            this.selectorPos = 8;
+        }
+        this.currentBlock = (this.hotBarStart+  this.selectorPos) % BlockData.BLOCK_LIST.length;
+    }  
 
     cleanUp() {
         this.shouldEnd = true;

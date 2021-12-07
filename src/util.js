@@ -76,3 +76,9 @@ function getClassName(Class) {
 function lerp(v, a, b) {
     return a + (b - a) * v;
 }
+
+function AbsoluteMinSign(a, b){
+    if(Math.abs(a) < Math.abs(b))
+        return a;
+    return b;
+}

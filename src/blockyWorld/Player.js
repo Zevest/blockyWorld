@@ -84,7 +84,7 @@ class Player extends Entity{
         this.collider.setOffset(this.cameraPosition);
         this.calculateAnimation(deltaTime * 10);
 
-        this.transform.zoom = 1 + Input.getKey('x') * this.zoom + this.zoomAnim;
+        this.transform.zoom = 1 + Input.getKey('c') * this.zoom + this.zoomAnim;
         this.transform.updateProjectionMatrix();
         this.transform.updateMatrix();
         if(this.collider.onGround){
