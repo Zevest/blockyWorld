@@ -4,7 +4,7 @@ const M_RIGHT = 3;
 
 class Input {
     static keyBoardPress = {};
-    static mouseEvent = {button: {}, position:{x:0, y:0}, move:{x:0, y:0, changed:false}};
+    static mouseEvent = {button: {}, position:{x:0, y:0}, move:{x:0, y:0, changed:false}, wheel:{ deltaX:0, deltaY:0}};
     static hasFocus = false;
     static hasMouseLock = false;
 
@@ -13,6 +13,7 @@ class Input {
     static onKeyUp = null;
     static onMouseDown = null;
     static onMouseUp = null;
+    static onMouseWheel = null;
 
     static get M_LEFT() {
         return M_LEFT;
@@ -46,6 +47,7 @@ class Input {
         obj.addEventListener("mousedown",  (event) => {Input.mouseDown(event.which, event.x, event.y)})
         obj.addEventListener("mouseup", (event) => {Input.mouseUp(event.which, event.x, event.y)})        
         obj.oncontextmenu = () => {return false;};
+        obj.addEventListener("mousewheel", (event) => {Input.mouseWheel(event.deltaX, event.deltaY)});
         window.setInterval(() => Input.updateInput(), 1 / updateRate); 
     }
 
@@ -108,12 +110,24 @@ class Input {
     }
 
     static mouseMove(event) {
-        if(/*Input.hasFocus && */Input.hasMouseLock){event.x
+        if(/*Input.hasFocus && */Input.hasMouseLock){
             Input.mouseEvent.position.x = event.x;
-            Input.mouseEvent.position.y = event.x;
+            Input.mouseEvent.position.y = event.y;
             Input.mouseEvent.move.x = event.movementX;
             Input.mouseEvent.move.y = event.movementY;
             Input.mouseEvent.move.changed = (event.movementX != 0 ||event.movementY != 0);
+        }
+    }
+
+    static mouseWheel(deltaX, deltaY) {
+        if(Input.hasMouseLock) {
+            Input.mouseEvent.wheel.deltaX = deltaX;
+            Input.mouseEvent.wheel.deltaY = deltaY;
+            if(Input.onMouseWheel)
+            Input.onMouseWheel(
+                Math.sign(Input.mouseEvent.wheel.deltaX),
+                Math.sign(Input.mouseEvent.wheel.deltaY)
+            );
         }
     }
 
@@ -149,6 +163,7 @@ class Input {
     static updateInput() {
         if(Input.mouseEvent.move.changed){
             Input.mouseEvent.move.changed = false;
+            
             //Input.mouseEvent.move.x = 0;
             //Input.mouseEvent.move.y = 0;
         }
