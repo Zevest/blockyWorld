@@ -1,7 +1,7 @@
 // Remplit une zone de Block un par un sur l'axe X
 function place(blockID, startX, y, z, endX) {
     if(startX >= endX) return;
-    World.currentWorld.setBlock(blockID, startX, y, z, false);
+    World.currentWorld.setBlock(blockID, startX, y, z, true);
     setTimeout(() => place(blockID, startX +1, y, z, endX), 100);
 }
 
