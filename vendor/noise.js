@@ -14,7 +14,7 @@
  *
  */
 
-(function(global){
+(function(global) {
     var module = global.noise = {};
   
     function Grad(x, y, z) {

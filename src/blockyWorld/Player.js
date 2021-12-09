@@ -9,12 +9,13 @@ class Player extends Entity{
     static minAngleY = -Math.PI/2.0 + 0.001;
     static maxAngleY = Math.PI/2.0 - 0.001;
 
-    constructor(objec3D){
+    constructor(objec3D) {
         super(objec3D);
         this.addComponent(BoxCollider, 0.6, 1.8, 0.6);
     }
      // TODO: fixe collision in x -63 z -63
-    Start(){
+    Start() {
+        // Vitesse de deplacement
         this.walkSpeed = 4.317;
         this.sprintSpeed = 5.612;
         this.sneakSpeed = 1.295;
@@ -24,46 +25,60 @@ class Player extends Entity{
         this.jumpHeight = 8.5;
         this.jumpStrength = 1.0;
 
+        // Direction
         this.forward = new THREE.Vector3();
         this.right = new THREE.Vector3();
+        // Variable temporaire
         this.movement = new THREE.Vector3();
         this.tmpeuler = new THREE.Euler( 0, 0, 0, 'YXZ' );
 
-        this.sensitivity = 0.02;
-        this.mouseSensitivity = 0.005;
+        // Camera
         this.cameraPosition = new THREE.Vector3(0.3, 1.6, 0.3);
         this.zoom = 2;
-        this.isRunning = false;
-        this.isSneaking = false;
+
+        //Variable animation
         this.zoomAnim = 0;
         this.sneakAnim = this.cameraPosition.y;
+        this.time = 0;
+      
+        this.sensitivity = 0.02;
+        this.mouseSensitivity = 0.005;
+        
+        // Etat du joueur
+        this.isRunning = false;
+        this.isSneaking = false;
         this.isFlying = false;
+        
+        // Donnees des entrees du joueur
         this.spacePressed = false;
         this.ZPressed = false;
         this.lastTimePressingSpace = 0;
         this.lastTimePressingZ = 0;
-        this.collider = this.getComponent(BoxCollider);
         this.FunctionToggletime = 0.25;
 
+        // Components
+        this.collider = this.getComponent(BoxCollider);
 
+        //TODO: separate movement into its own component
+        // Initialisation des Callbacks
         Input.onKeyDown = (key) => {
-            if(key == ' ' && !this.spacePressed){
-                if(app.time - this.lastTimePressingSpace < this.FunctionToggletime)
+            if(key == ' ' && !this.spacePressed) {
+                if(this.time - this.lastTimePressingSpace < this.FunctionToggletime)
                     this.toggleFly();
-                else this.lastTimePressingSpace = app.time;
+                else this.lastTimePressingSpace = this.time;
                 this.spacePressed = true;
             }
             if(key == 'z' && !this.ZPressed) {
-                if(app.time - this.lastTimePressingZ < this.FunctionToggletime){
+                if(this.time - this.lastTimePressingZ < this.FunctionToggletime) {
                     this.isRunning = true;
                     this.lastTimePressingZ = 0;
                 }
-                else this.lastTimePressingZ = app.time;
+                else this.lastTimePressingZ = this.time;
                 this.ZPressed = true;
             }
         };
         Input.onKeyUp = (key) =>{
-            if(key == ' '){
+            if(key == ' ') {
                 this.spacePressed = false;
             }
             if(key == 'z') {
@@ -74,25 +89,32 @@ class Player extends Entity{
     }
 
 
-    Update(deltaTime){
+    Update(deltaTime) {
+        this.time += deltaTime;
         this.RotateCamera();
         this.CalculateMovement();
+
+        // La gravite n'affecte pas le joueur lorsqu'il vole
         if(!this.isFlying)
              this.collider.applyForce(0, -28, 0);
        
         this.collider.setLinearVelocityV(this.movement);
         this.collider.setOffset(this.cameraPosition);
+        // Recalcule les animations
         this.calculateAnimation(deltaTime * 10);
-
+        this.cameraPosition.y = this.sneakAnim;
+        // Zoom
         this.transform.zoom = 1 + Input.getKey('c') * this.zoom + this.zoomAnim;
         this.transform.updateProjectionMatrix();
         this.transform.updateMatrix();
-        if(this.collider.onGround){
+
+        if(this.collider.onGround) {
             this.isFlying = false;
         }
     }
 
-    calculateAnimation(deltaTime){
+    /// Calcule l'etat de la position et du zoom de la camera
+    calculateAnimation(deltaTime) {
         if(this.isRunning &&  this.zoomAnim > -0.3)
         this.zoomAnim = lerp(deltaTime, this.zoomAnim, -0.3);
         else if(this.zoomAnim < 0)
@@ -104,7 +126,8 @@ class Player extends Entity{
             this.sneakAnim = lerp(deltaTime, this.sneakAnim, 1.6);
     }
 
-    RotateCamera(){
+    /// Fait tourner la camera en fonction des entree utilisateur
+    RotateCamera() {
         let rotX = 0, rotY = 0, rotZ = 0, move = Input.getMouseMovement();
         if(move.changed) {
             rotX = this.rotationSpeed * move.x * this.mouseSensitivity;
@@ -129,7 +152,7 @@ class Player extends Entity{
         if(Input.getKey("e")) {
             rotZ += this.rotationSpeed * this.sensitivity;
         }
-        if(rotX != 0 || rotY != 0 || rotZ != 0 ){
+        if(rotX != 0 || rotY != 0 || rotZ != 0 ) {
             this.tmpeuler.setFromQuaternion(this.transform.quaternion);
             this.tmpeuler.y -= rotX ;
             this.tmpeuler.x = clamp(this.tmpeuler.x - (rotY), Player.minAngleY, Player.maxAngleY);
@@ -138,19 +161,25 @@ class Player extends Entity{
         }
     }
 
-    toggleFly(){
+    /// Fait basculer l'etat en vole
+    toggleFly() {
         this.isFlying = !this.isFlying;
     }
 
-    CalculateMovement(){
+    /// Calcule les movements du joueur
+    CalculateMovement() {
         this.up = Player.Up;
+        // Recupere un vecteur pointant vers l'avant du joueur
         this.transform.getWorldDirection(this.forward);
         this.forward.y = 0;
         this.forward.normalize();
+        // Calcule un vecteur pointant vers la droite du joueur
         this.right.crossVectors(this.up, this.forward);
         this.right.normalize();
         this.movement.set(0, 0, 0);
-        if(Input.getKey("Control")){
+
+        // Entrer clavier de l'utilisateur
+        if(Input.getKey("Control")) {
             this.isRunning = true
         }
         if(Input.getKey('z')) {  
@@ -168,41 +197,44 @@ class Player extends Entity{
         }
         let isMoving = this.movement.length() != 0;
         if(!isMoving) this.isRunning = false;
-
         if(Input.getKey("Shift")) {
             this.isSneaking = true;
             if(!this.isFlying) this.isRunning = false;
         }else{
             this.isSneaking = false;
         }
-        this.cameraPosition.y = this.sneakAnim;
+
+
         let speed;
-        
-        if(this.isFlying){
+        // Choix de la vitesse en fonction de l'etat du joueur
+        if(this.isFlying) {
             speed = (this.isRunning ? this.flyingSprintSpeed: this.flyingSpeed);
         }else{
             speed = (this.isSneaking ? this.sneakSpeed : (this.isRunning ? this.sprintSpeed : this.walkSpeed));
         }
-        if(isMoving){
+        
+        if(isMoving) {
             this.movement.normalize();
             this.movement.multiplyScalar(speed);
         }else{
+            // Conserve le mouvement
             this.movement.x = this.collider.velocity.x;
             this.movement.z = this.collider.velocity.z;
         }
-        if(!this.isFlying){
-            if(Input.getKey(' ') && this.collider.onGround){
+        if(!this.isFlying) {
+            // Controle au sol
+            if(Input.getKey(' ') && this.collider.onGround) {
                 if(this.collider.velocity.y == 0)
                     this.movement.y = this.jumpHeight * this.jumpStrength;
             }else{
                 this.movement.y =  this.collider.velocity.y;
-                
             }
         }else{
-            if(this.isSneaking){
+            // Controle en vole
+            if(this.isSneaking) {
                 this.movement.y = -speed;
             }
-            if(Input.getKey(' ')){
+            if(Input.getKey(' ')) {
                 this.movement.y = speed;
             }
         }

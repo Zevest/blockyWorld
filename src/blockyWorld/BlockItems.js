@@ -1,8 +1,10 @@
-function BlockMesh(material, blockData){
+/// Cree le Mesh pour le sprites d'un bloc
+function BlockMesh(material, blockData) {
     let pos = [], index = [], uv = []
     let face = BLOCK.FRONT;
     let mat = material.block.opaque;
-    if(!BlockData.CROSS_LIST[blockData.id]){
+    // Determination du materiau et des faces necessaire
+    if(!BlockData.CROSS_LIST[blockData.id]) {
         face |= BLOCK.RIGHT | BLOCK.TOP;
         if(BlockData.TRANSPARENT_LIST[blockData.id])
             mat = material.block.transparent;
@@ -12,6 +14,7 @@ function BlockMesh(material, blockData){
     else mat = material.cross;
         
     createBlock(blockData, pos, index, uv, face);
+    // Creation de la Geometry
     let posFloat32Array = new Float32Array(pos);
     let uvFloat32Array = new Float32Array(uv);
     let geometry = new THREE.BufferGeometry();
@@ -25,15 +28,15 @@ function BlockMesh(material, blockData){
     mesh.name = blockData.name;
     return mesh;
 }
-
+/// Cree le Meshs de tous blocs
 function createBlocksItem(material) {
     let meshes = [];
-    for(b of BlockData.BLOCK_LIST){
+    for(b of BlockData.BLOCK_LIST) {
         meshes.push(BlockMesh(material, b));
     }
     return meshes;
 }
-
+/// Creation de la scene pour le rendu des sprites des blocs
 function initBlockAtlas(parent, itemPerRow, spriteSize, materials) {
     const ITEM_PER_ROW = itemPerRow;
     let obj = {
@@ -52,26 +55,24 @@ function initBlockAtlas(parent, itemPerRow, spriteSize, materials) {
         swidth: 0
     }
     parent.renderer.setClearColor(Color(0, 0, 0), 1.0);
+
     obj.meshs = createBlocksItem(materials);
     const ITEM_PER_COL = Math.ceil(obj.meshs.length / ITEM_PER_ROW);
     obj.row = ITEM_PER_COL;
     obj.count = obj.meshs.length;
 
-    
+    // Calcule de dimension
     const SPACEX = 1.5;
-    const SPACEY = 1.65;
-    
+    const SPACEY = 1.65;  
     const UNITX = spriteSize/2
     const UNITY = spriteSize/2
     const RWIDTH = Math.sqrt((SPACEX *-UNITX)**2 + (SPACEX *UNITX)**2);
-
-
     obj.swidth = UNITX * SPACEX;
     obj.sheight = UNITY * SPACEY;
-    
-
     obj.width  = obj.swidth * ITEM_PER_ROW * SPACEX;
     obj.height =  obj.sheight * ITEM_PER_COL * SPACEY;
+
+    // Redimention du canvas
     parent.updateCameraView(obj.width, obj.height);
 
     obj.camera.left =  parent.canvas.width / - 2;
@@ -102,7 +103,7 @@ function initBlockAtlas(parent, itemPerRow, spriteSize, materials) {
     obj.scene.add(obj.ambient);
     obj.scene.add(obj.camera);
      
-    
+    // Calcule des positions des blocs
     for(let i = 0; i< obj.meshs.length; ++i) {
         obj.meshs[i].position.set(
             startX + (i % ITEM_PER_ROW) * UNITX * SPACEX,
@@ -110,23 +111,20 @@ function initBlockAtlas(parent, itemPerRow, spriteSize, materials) {
             -spriteSize
         );
         obj.meshs[i].scale.set(RWIDTH/2,UNITY, RWIDTH/2);
-        if(BlockData.CROSS_LIST[i]){
+        if(BlockData.CROSS_LIST[i]) {
         }
         else {
             obj.meshs[i].rotateX(Math.PI/6);
             obj.meshs[i].rotateY(-Math.PI/4);
         }
-        obj.scene.add(obj.meshs[i]);
-        
+        obj.scene.add(obj.meshs[i]);      
     }
    
-    parent.renderer.preserveDrawingBuffer = true;
-    obj.url = parent.renderer.domElement.toDataURL("image/png", 1.0);
-
     return obj;
 }
 
-function deleteBlockData(obj){
+/// Liberation de la memoire occupe par la scene de rendu des sprites de bloc
+function deleteBlockData(obj) {
     for(let blockMesh of obj.meshs) {
         obj.scene.remove(blockMesh);
         blockMesh.geometry.dispose();

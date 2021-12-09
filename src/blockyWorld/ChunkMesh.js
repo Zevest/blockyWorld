@@ -28,10 +28,10 @@ class ChunkMesh {
             {map:materials.texture, transparent: true, alphaTest: 1, shadowSide: THREE.FrontSide});
         
         materials.customDepth = new THREE.MeshDepthMaterial(
-            {depthPacking: THREE.RGBADepthPacking, map: materials.texture, // or, alphaMap: myAlphaMap
+            {depthPacking: THREE.RGBADepthPacking, map: materials.texture, // ou, alphaMap: myAlphaMap
             alphaTest: 0 });
         
-        /// Modification du shader pou prendre en compte les coordonées uv des instances des block de type croix.
+        /// Modification du shader pou prendre en compte les coordonees uv des instances des blocs de type croix.
         materials.cross.onBeforeCompile = (shader) => {    
             shader.vertexShader = shader.vertexShader
             .replace("#include <common>",SHADER_COMMON_REPLACE)
@@ -41,7 +41,7 @@ class ChunkMesh {
     }
 
 
-    /// Contruit la geometry et les Mesh d'un chunk
+    /// Construit la Geometry et les Meshs d'un chunk
     static build(chunkData, materials) {
         const chunkMeshs = {
             geometry:{
@@ -66,14 +66,14 @@ class ChunkMesh {
         let tr_vert = [], tr_index = [], tr_uv = [] // Sommet d'un bloc transparent
         
         let cr_vert = [], cr_index = [], cr_uv = [] // Sommet d'un bloc de typ croix
-        // Les bloc de type croix on tous leurs vecteur normal pointant vers le haut pour qu'il soit éclairer uniformement
+        // Les blocs de type croix on tous leurs vecteur normal pointant vers le haut pour qu'il soit eclairer uniformement
         let cr_normal = [
             0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
             0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0
         ]
-        let cr_pos_instanced = [], cr_uv_instanced = [], cr_dim_instanced = []; // donnée par instance des blocs de type croix
+        let cr_pos_instanced = [], cr_uv_instanced = [], cr_dim_instanced = []; // donnee par instance des blocs de type croix
 
-        // une seul geometry est necessaire pour les blocs de type croix puisqu'ils seront instanciés.
+        // Une seul Geometry est necessaire pour les blocs de type croix puisqu'ils seront instancies.
         createBlock(BlockData.BLOCK_LIST[0],cr_vert, cr_index, [], BLOCK.DIAGONAL, [0,0,0]);
         cr_uv = BlockData.BLOCK_LIST[0].getUVCross(BlockData.BLOCK_LIST[0].face.front);
         
@@ -81,13 +81,13 @@ class ChunkMesh {
 
         for(let i = 0; i < Chunk.width; ++i)
             for(let j = 0; j < Chunk.height; ++j)
-                for(let k = 0; k < Chunk.depth; ++k){
+                for(let k = 0; k < Chunk.depth; ++k) {
                     let faces = 0
                     let bIndex = chunkData.getBlock(i, j, k);
                     if(bIndex == -1 || bIndex == undefined) continue;
                     let bdata = BlockData.BLOCK_LIST[bIndex];
                     
-                    switch(bdata.block.type){
+                    switch(bdata.block.type) {
                         case BlockData.BLOCK_TYPE[0]:
                         {
                             faces = chunkData.getBlockRenderedFace(i, j, k);
@@ -121,7 +121,7 @@ class ChunkMesh {
                 }
 
         
-        // Creation de la geometry pour les blocs opaque
+        // Creation de la Geometry pour les blocs opaque
         let block_opaque_vertices = new Float32Array(op_vert);
         let block_opaque_uvs = new Float32Array(op_uv);
 
@@ -133,7 +133,7 @@ class ChunkMesh {
         chunkMeshs.geometry.block.opaque.setIndex(op_index);
         chunkMeshs.geometry.block.opaque.computeVertexNormals();
         
-        // Creation de la geometry pour les blocs semi transparent
+        // Creation de la Geometry pour les blocs semi transparent
         let block_semi_transparent_vertices = new Float32Array(st_vert);
         let block_semi_transparent_uvs = new Float32Array(st_uv);
 
@@ -147,7 +147,7 @@ class ChunkMesh {
         chunkMeshs.castShadow = true;
         chunkMeshs.receiveShadow = true;
         
-        // Creation de la geometry pour les blocs transparent
+        // Creation de la Geometry pour les blocs transparent
         let block_transparent_vertices = new Float32Array(tr_vert);
         let block_transparent_uvs = new Float32Array(tr_uv);
 
@@ -160,8 +160,7 @@ class ChunkMesh {
         chunkMeshs.geometry.block.transparent.computeVertexNormals();
         
 
-        // Creation de la geometry pour les blocs de type croix
-        //let cross_instance_position_offset = new Float32Array(cr_pos_instanced);
+        // Creation de la Geometry pour les blocs de type croix
         let cross_instance_uvs = new Float32Array(cr_uv_instanced);
         
         let cross_instance_dim = new Int32Array(cr_dim_instanced);
@@ -178,14 +177,13 @@ class ChunkMesh {
                 new THREE.BufferAttribute(cross_transparent_normal, 3));
         chunkMeshs.geometry.cross.setIndex(cr_index);
         
-        //chunkMeshs.geometry.cross.setAttribute("instancePos", 
-        //        new THREE.InstancedBufferAttribute(cross_instance_position_offset, 3));
+
         chunkMeshs.geometry.cross.setAttribute("instanceUv", 
                 new THREE.InstancedBufferAttribute(cross_instance_uvs, 2));
         chunkMeshs.geometry.cross.setAttribute("instanceDim",
                 new THREE.InstancedBufferAttribute(cross_instance_dim, 1));
         
-        // Creation de des Mesh pour chaque geometry
+        // Creation de des Mesh pour chaque Geometry
 
         chunkMeshs.mesh.block.opaque = new THREE.Mesh(
                 chunkMeshs.geometry.block.opaque,
@@ -193,7 +191,6 @@ class ChunkMesh {
         chunkMeshs.mesh.block.opaque.name = "opaque_block_mesh";
         chunkMeshs.mesh.block.opaque.castShadow = true;
         chunkMeshs.mesh.block.opaque.receiveShadow = true;
-        //chunkMeshs.mesh.block.opaque.renderOrder = 4;        
 
 
         chunkMeshs.mesh.block.semi = new THREE.Mesh(
@@ -201,7 +198,6 @@ class ChunkMesh {
         chunkMeshs.mesh.block.semi.name = "semi_transparent_block_mesh";
         chunkMeshs.mesh.block.semi.castShadow = true;
         chunkMeshs.mesh.block.semi.receiveShadow = true;
-        //chunkMeshs.mesh.block.semi.renderOrder = 1;        
 
 
         chunkMeshs.mesh.block.transparent = new THREE.Mesh(
@@ -210,7 +206,6 @@ class ChunkMesh {
         chunkMeshs.mesh.block.transparent.name = "transparent_block_mesh";
         chunkMeshs.mesh.block.transparent.castShadow = true;
         chunkMeshs.mesh.block.transparent.receiveShadow = true;
-        //chunkMeshs.mesh.block.transparent.renderOrder = 3;
 
 
         const INSTANCE_COUNT = cr_uv_instanced.length / 2;
@@ -220,7 +215,6 @@ class ChunkMesh {
         chunkMeshs.mesh.cross.name = "transparent_cross_mesh";
         chunkMeshs.mesh.cross.castShadow = true;
         chunkMeshs.mesh.cross.receiveShadow = true;
-        //chunkMeshs.mesh.cross.renderOrder = 2;
         
         // On calcule la position et la taille des instances.
         const dummy = new THREE.Object3D();
@@ -252,10 +246,10 @@ class ChunkMesh {
         chunk.chunkObj = object3D;
     }
 
-    /// Supprime le mesh et sa goemetry et les retire de la scene.
+    /// Supprime les mesh et leur goemetry puis les retire de la scene.
     static deleteData(object3D, chunkData) {
         if(!object3D || !chunkData || !chunkData.isLoaded) return;
-        for(let i = object3D.children.length-1; i >=  0; --i){
+        for(let i = object3D.children.length-1; i >=  0; --i) {
             object3D.children[i].geometry.dispose();
             object3D.remove(object3D.children[i]);
         }

@@ -10,7 +10,7 @@ class CameraController extends Component{
         super(object3D)
     }
 
-    Start(){
+    Start() {
         this.moveSpeed = 3;
         this.rotationSpeed = 1;
         this.forward = new THREE.Vector3();
@@ -89,7 +89,7 @@ class CameraController extends Component{
         if(Input.getKey("e")) {
             rotZ += this.rotationSpeed * this.sensibility;
         }
-        if(rotX != 0 || rotY != 0 || rotZ != 0 || !this.parent.position.equals(this.lastPos)){
+        if(rotX != 0 || rotY != 0 || rotZ != 0 || !this.parent.position.equals(this.lastPos)) {
             this.tmpeuler.setFromQuaternion(this.parent.quaternion);
             this.tmpeuler.y -= rotX /* deltaTime*/;
             this.tmpeuler.x = clamp(this.tmpeuler.x - (rotY /* deltaTime*/), CameraController.minAngleY, CameraController.maxAngleY);

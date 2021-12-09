@@ -1,3 +1,4 @@
+/// Stocke toutes les donnees de necessaire pour le rendu des icones des blocs
 const renderData = {
     canvas: null,
     context: null,
@@ -7,18 +8,22 @@ const renderData = {
     blockAtlas: null,
     filePendingCount: 0,
     fileLoaded: 0,
+    // dimension du sprite de la bar de bloc
     hotbar: {x:0, y:23, w:182, h:22},
+    // dimention du sprite de selection de bloc
     hotbarSelector: {x:1, y:23, w:23, h:23}
 }
 
-function isReady(){
+function isReady() {
     return renderData.filePendingCount == renderData.fileLoaded;
 }
 
-function initRenderData(parent, canvas, context, material){
+/// Initialise les donnees de la scene
+function initRenderData(parent, canvas, context, material) {
     renderData.canvas = canvas;
     renderData.context = context;
     canvas.imageSmoothingEnabled = true;
+    // initialise la scene
     renderData.blockAtlasData = initBlockAtlas(parent, 8, 128, material);
     setTimeout(() => {
         renderData.blockAtlas = saveScreen(parent);
@@ -29,7 +34,8 @@ function initRenderData(parent, canvas, context, material){
     }, 400);
 }
 
-function saveScreen(parent){
+/// Enregistre les pixels du canvas dans une image et la charge
+function saveScreen(parent) {
     renderData.blockAtlasData.scene
     parent.renderer.preserveDrawingBuffer = true;
     parent.updateCameraView(renderData.blockAtlasData.width, renderData.blockAtlasData.height)
@@ -38,7 +44,8 @@ function saveScreen(parent){
     return LoadImage(parent.renderer.domElement.toDataURL("image/png", 1.0));
 }
 
-function LoadImage(src){
+/// Charge une image
+function LoadImage(src) {
     let image = new Image();
     ++renderData.filePendingCount;
     image.src = src;
@@ -46,7 +53,8 @@ function LoadImage(src){
     return image;
 }
 
-function drawCross(){
+/// Dessine un reticule au centre de l'ecran
+function drawCross() {
     renderData.context.fillStyle = "white";
     let unit = Math.min(Math.max(1000, Math.max(renderData.canvas.width, renderData.canvas.height)), 1200);
     let wm = unit / 300;
@@ -60,8 +68,9 @@ function drawCross(){
     renderData.context.fillRect(renderData.canvas.width / 2 - wm / 2 + 1, renderData.canvas.height / 2 - h / 2 + 1, wm - 2, h - 2);
 }
 
-function drawHotBar(x, y, h){
-    if(isReady() && renderData.fileLoaded > 0){
+/// Affiche la bar de bloc
+function drawHotBar(x, y, h) {
+    if(isReady() && renderData.fileLoaded > 0) {
         let aspect = renderData.hotbar.w / renderData.hotbar.h;
         renderData.context.drawImage(
             renderData.widget, 0, 0, renderData.hotbar.w, renderData.hotbar.h,
@@ -70,8 +79,9 @@ function drawHotBar(x, y, h){
     }
 }
 
-function drawSelector(x, y, w){
-    if(isReady() && renderData.fileLoaded > 0){
+/// Affiche le sprite de selection de bloc
+function drawSelector(x, y, w) {
+    if(isReady() && renderData.fileLoaded > 0) {
         renderData.context.drawImage(renderData.widget,
             renderData.hotbarSelector.x, renderData.hotbarSelector.y,
             renderData.hotbarSelector.w, renderData.hotbarSelector.h,
@@ -79,15 +89,16 @@ function drawSelector(x, y, w){
     }
 }
 
-function drawBlock(id, x,y, w){
-    
-    if(isReady() && renderData.fileLoaded > 0){
+/// Affiche le sprite d'un bloc
+function drawBlock(id, x, y, w) {
+    if(isReady() && renderData.fileLoaded > 0) {
+        // calcule des coordonees du sprite
         let rx = id % renderData.blockAtlasData.column;
         let ry = Math.floor(id / renderData.blockAtlasData.column);
         let rw = renderData.blockAtlasData.swidth;
         let rh = renderData.blockAtlasData.sheight;
         let aspect = rh / rw;
-        if(renderData.blockAtlas != undefined){
+        if(renderData.blockAtlas != undefined) {
             renderData.context.drawImage(renderData.blockAtlas, rx * rw, ry * rh,  rw, rh, x, y, w, w * aspect);
         }
     }

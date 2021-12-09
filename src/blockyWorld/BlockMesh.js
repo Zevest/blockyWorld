@@ -15,7 +15,7 @@ const BLOCK = {
 
 // Indices des triangles d'une face
 const INDEX_RECT = [0, 1, 2, 1, 3, 2];
-// Indices des triangle d'un block de type croix
+// Indices des triangle d'un bloc de type croix
 const INDEX_CROSS = [
     0, 1, 6, 1, 7, 6,
     4, 5, 2, 5, 3, 2,
@@ -23,14 +23,14 @@ const INDEX_CROSS = [
     12, 10, 13, 10, 11, 13
 ]
 const HALF_SQRT_2 = 0.7071067811865476;
-/// Contruit un block en ajoutant un face pour chaque cote demande
-function createBlock(blockData, verticesArray, indicesArray, uvs, faces, position = [0, 0, 0]){
+/// Contruit un bloc en ajoutant un face pour chaque cote demande
+function createBlock(blockData, verticesArray, indicesArray, uvs, faces, position = [0, 0, 0]) {
     // flag contenant les faces demandees
     let p = faces;
     let count = 0, mask;
     vertOffset = verticesArray.length, uvOffset = uvs.length;
     // Cas special pour les diagonales, on a deja les indices et la direction
-    if(p == BLOCK.DIAGONAL){
+    if(p == BLOCK.DIAGONAL) {
         INDEX_CROSS.forEach(v => indicesArray.push(v + (vertOffset / 3)));
         addFace(position, verticesArray, vertOffset, uvs, uvOffset, blockData, BLOCK.DIAGONAL);
         vertOffset += 30;
@@ -59,7 +59,7 @@ function createBlock(blockData, verticesArray, indicesArray, uvs, faces, positio
         
         while(mask) {
             // Pour bit a 1 on ajout les position et uv correspondant a la direction de la face ainsi les indices
-            if(faces & mask){
+            if(faces & mask) {
                 INDEX_RECT.forEach(v => indicesArray.push(v + (vertOffset / 3)));
                 addFace(position, verticesArray, vertOffset, uvs, uvOffset, blockData, mask);
                 vertOffset += 12;
@@ -75,9 +75,9 @@ function addFace(position, vertices, vertOffset, uvs, uvOffset, blockData, direc
     const SIZE = {x: 0.5, y: 0.5, z: 0.5};
     let out = {x: 1.0, y: 1.0, z: 1.0};
     // Certains blocs peuvent avoir une taille personalise
-    if(blockData.block.properties){
+    if(blockData.block.properties) {
         const prop = blockData.block.properties;
-        if(prop.size){
+        if(prop.size) {
             //SIZE.x = prop.size.x / 2;
             //SIZE.y = prop.size.y / 2;
             //SIZE.z = prop.size.z / 2;
@@ -93,10 +93,10 @@ function addFace(position, vertices, vertOffset, uvs, uvOffset, blockData, direc
     // Elle correspond au dimension (au pixel pres) de leur sprite.
     /*
     let tmp = BlockInfo.getTileFromName(blockData.face.front);
-    if(tmp.properties){
+    if(tmp.properties) {
         const prop = BlockInfo.getPropertyObject(tmp.properties);
        
-        if(prop.pixelWidth){
+        if(prop.pixelWidth) {
             SIZE.x *= prop.pixelWidth / 16;
             SIZE.y *= prop.pixelHeight / 16;
             SIZE.z *= prop.pixelWidth / 16;
@@ -104,7 +104,7 @@ function addFace(position, vertices, vertOffset, uvs, uvOffset, blockData, direc
         }
     }*/
     let pos = uvOffset;
-    switch(direction){
+    switch(direction) {
         case BLOCK.TOP:
             // HAUT AVANT GAUCHE
             vertices[vertOffset++] = -SIZE.x  * 1.000 + position[(vertOffset-1)%3];
@@ -259,11 +259,11 @@ function addFace(position, vertices, vertOffset, uvs, uvOffset, blockData, direc
             blockData.getUVRect(blockData.face.front).forEach( v => uvs[pos++] = v);
             break;
         case BLOCK.DIAGONAL:
-            // Les blocs de type croix sont composé de 4 face
+            // Les blocs de type croix sont compose de 4 face
             // 2 Faces croise vers l'avant, visible que d'un sens
             // il faut dont 2 autres faces avec la meme position que les 
             // deux premiere mais dans des directions oppose.
-            // On peut obtenir le meme résultat avec precisant
+            // On peut obtenir le meme resultat avec precisant
             // side = THREE.DoubleSide durant la creation du materiau
             // mais cela pose des problemes pour le calcule des ombres.
 

@@ -1,4 +1,6 @@
-const SHADER_COMMON_REPLACE = "#include <common>\n\
+// Delcaration des variables
+const SHADER_COMMON_REPLACE = "\
+#include <common>\n\
 #ifdef USE_INSTANCING\n\
 attribute vec2 instanceUv;\n\
 attribute int instanceDim;\n\
@@ -8,7 +10,9 @@ float tileWidth = 16.0;\n\
 float tileHeight = 16.0;\n\
 #endif\n";
 
-const SHADER_UV_VERTEX_REPLACE =  "#ifdef USE_UV\n\
+// Calcule des coordonees uv de l'intance
+const SHADER_UV_VERTEX_REPLACE =  "\
+#ifdef USE_UV\n\
 #ifdef USE_INSTANCING\n\
     float xMin = float((instanceDim >> 0) & 0xFF);\n\
     float xMax = float((instanceDim >> 8) & 0xFF);\n\
@@ -17,7 +21,7 @@ const SHADER_UV_VERTEX_REPLACE =  "#ifdef USE_UV\n\
     float xMinUV = xMin / imageWidth;\n\
     float xMaxUV = (tileWidth - xMax) / imageWidth;\n\
     float yMaxUV = (tileHeight - yMax) / imageHeight;\n\
-    if((uv*imageHeight).y > 0.5){\n\
+    if((uv*imageHeight).y > 0.5) {\n\
         if((uv*imageWidth).x > 0.5)\n\
             vUv = (uvTransform * vec3(uv + instanceUv - vec2(xMinUV, yMaxUV), 1)).xy;\n\
         else\n\

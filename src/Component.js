@@ -16,7 +16,7 @@ class Component {
     }
     
     hasComponent(Class) {
-        if(typeof Class == 'string'){
+        if(typeof Class == 'string') {
             return (this.object3D.userData[Class] == undefined);
         }
         else
@@ -81,7 +81,7 @@ function addComponent(object3d, Class, ...args) {
 }
 
 function hasComponent(object3d, Class) {
-    if(typeof Class == 'string'){
+    if(typeof Class == 'string') {
         return (object3d.userData[Class] == undefined);
     }
     else
