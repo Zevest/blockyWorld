@@ -19,8 +19,8 @@ class Player extends Entity{
         this.walkSpeed = 4.317;
         this.sprintSpeed = 5.612;
         this.sneakSpeed = 1.295;
-        this.flyingSpeed = 6.924//10.89;
-        this.flyingSprintSpeed = 10.89//21.78;
+        this.flyingSpeed = 10.89;
+        this.flyingSprintSpeed = 21.78;
         this.rotationSpeed = 1;
         this.jumpHeight = 8.5;
         this.jumpStrength = 1.0;
@@ -39,6 +39,11 @@ class Player extends Entity{
         //Variable animation
         this.zoomAnim = 0;
         this.sneakAnim = this.cameraPosition.y;
+        this.walkAnimStrenght = 0;
+        this.walkAnimCycleHorizontal = 0;
+        this.walkAnimCycleVertical =  0;
+        this.walkAnimHorizontalAmp = 0.05
+        this.walkAnimVerticalAmp = 0.2
         this.time = 0;
       
         this.sensitivity = 0.02;
@@ -48,7 +53,7 @@ class Player extends Entity{
         this.isRunning = false;
         this.isSneaking = false;
         this.isFlying = false;
-        
+        this.isMoving = false;
         // Donnees des entrees du joueur
         this.spacePressed = false;
         this.ZPressed = false;
@@ -72,6 +77,7 @@ class Player extends Entity{
                 if(this.time - this.lastTimePressingZ < this.FunctionToggletime) {
                     this.isRunning = true;
                     this.lastTimePressingZ = 0;
+                    this.walkAnimCycle = 0;
                 }
                 else this.lastTimePressingZ = this.time;
                 this.ZPressed = true;
@@ -99,10 +105,13 @@ class Player extends Entity{
              this.collider.applyForce(0, -28, 0);
        
         this.collider.setLinearVelocityV(this.movement);
+        //this.collider.velocity.y = this.movement.y;
         this.collider.setOffset(this.cameraPosition);
         // Recalcule les animations
         this.calculateAnimation(deltaTime * 10);
-        this.cameraPosition.y = this.sneakAnim;
+        // Cycle de pas et accroupissement
+        this.cameraPosition.y = this.sneakAnim + this.walkAnimCycleVertical * this.walkAnimVerticalAmp;
+        this.cameraPosition.x = 0.3 + this.walkAnimCycleHorizontal * this.walkAnimHorizontalAmp;
         // Zoom
         this.transform.zoom = 1 + Input.getKey('c') * this.zoom + this.zoomAnim;
         this.transform.updateProjectionMatrix();
@@ -113,7 +122,7 @@ class Player extends Entity{
         }
     }
 
-    /// Calcule l'etat de la position et du zoom de la camera
+    /// Calcule la position et le zoom de la camera
     calculateAnimation(deltaTime) {
         if(this.isRunning &&  this.zoomAnim > -0.3)
         this.zoomAnim = lerp(deltaTime, this.zoomAnim, -0.3);
@@ -124,6 +133,15 @@ class Player extends Entity{
             this.sneakAnim = lerp(deltaTime, this.sneakAnim, 1.4);
         else
             this.sneakAnim = lerp(deltaTime, this.sneakAnim, 1.6);
+        if(this.collider.onGround && !this.isSneaking && this.isMoving){
+            this.walkAnimStrenght = lerp(deltaTime, this.walkAnimStrenght, 1);
+
+        }else{
+            this.walkAnimStrenght = lerp(deltaTime, this.walkAnimStrenght, 0);
+        }
+        let freq = this.isRunning ? 10 : 6;
+        this.walkAnimCycleVertical = Math.abs(Math.cos(this.time* freq)) * this.walkAnimStrenght;
+        this.walkAnimCycleHorizontal = Math.sin(this.time* freq) * this.walkAnimStrenght;
     }
 
     /// Fait tourner la camera en fonction des entree utilisateur
@@ -195,8 +213,8 @@ class Player extends Entity{
         if(Input.getKey('d')) {
            this.movement.sub(this.right);
         }
-        let isMoving = this.movement.length() != 0;
-        if(!isMoving) this.isRunning = false;
+        this.isMoving = this.movement.length() != 0;
+        if(!this.isMoving) this.isRunning = false;
         if(Input.getKey("Shift")) {
             this.isSneaking = true;
             if(!this.isFlying) this.isRunning = false;
@@ -213,13 +231,15 @@ class Player extends Entity{
             speed = (this.isSneaking ? this.sneakSpeed : (this.isRunning ? this.sprintSpeed : this.walkSpeed));
         }
         
-        if(isMoving) {
+        if(this.isMoving) {
+            this.collider.friction = 0.98;
             this.movement.normalize();
             this.movement.multiplyScalar(speed);
         }else{
             // Conserve le mouvement
             this.movement.x = this.collider.velocity.x;
             this.movement.z = this.collider.velocity.z;
+            this.collider.friction = 0.9;
         }
         if(!this.isFlying) {
             // Controle au sol

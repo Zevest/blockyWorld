@@ -453,7 +453,7 @@ class Application {
 
     // Definie la position du selecteur
     setSelectorTo(block) {
-        // Calcule la direction dans laquel deplacer le selecteur et l'indice du premier bloc affficher dans la bar de selection 
+        // Calcule la direction dans laquel deplacer le selecteur et l'indice du premier bloc affficher dans la barre de selection 
         let d1 = block - this.hotBarStart;
         let d2 = (block + BlockData.BLOCK_LIST.length) - this.hotBarStart;
         let d = AbsoluteMinSign(d1, d2); 

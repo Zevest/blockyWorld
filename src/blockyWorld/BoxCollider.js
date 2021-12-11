@@ -36,7 +36,7 @@ class BoxCollider extends Component {
         this.velocity = new THREE.Vector3();
         this.acceleration = new THREE.Vector3();
         this.friction = 0.9;
-        this.airFriction = 0.99;
+        this.airFriction = 0.98;
 
         // Nombre d'iteration du calcule de deplacement et de collision
         this.simulationStep = 3;
@@ -301,7 +301,7 @@ class BoxCollider extends Component {
                 collide += this.CollideY();
             }
         }
-         // Applique une portion de la vitesse sur l'axe Z et test la collision, le tous N fois
+        // Applique une portion de la vitesse sur l'axe Z et test la collision, le tous N fois
         // avec N est le nombre de pas de simulation ou moins si une collision a lieu
         for(let i = 0, col = 0; i < this.simulationStep&& !col; ++i) {
             if(this.velocity.z != 0) {

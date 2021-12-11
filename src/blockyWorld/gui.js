@@ -8,7 +8,7 @@ const renderData = {
     blockAtlas: null,
     filePendingCount: 0,
     fileLoaded: 0,
-    // dimension du sprite de la bar de bloc
+    // dimension du sprite de la barre de bloc
     hotbar: {x:0, y:23, w:182, h:22},
     // dimention du sprite de selection de bloc
     hotbarSelector: {x:1, y:23, w:23, h:23}
@@ -68,7 +68,7 @@ function drawCross() {
     renderData.context.fillRect(renderData.canvas.width / 2 - wm / 2 + 1, renderData.canvas.height / 2 - h / 2 + 1, wm - 2, h - 2);
 }
 
-/// Affiche la bar de bloc
+/// Affiche la barre de bloc
 function drawHotBar(x, y, h) {
     if(isReady() && renderData.fileLoaded > 0) {
         let aspect = renderData.hotbar.w / renderData.hotbar.h;
